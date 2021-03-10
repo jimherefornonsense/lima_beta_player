@@ -56,7 +56,7 @@ func errorMsg(arg string) string {
 func (gm *Game) playerNO(args string) string {
 	gm.totalPlayers, _ = strconv.Atoi(args[len(args)-1:])
 	gm.activePlayers = gm.totalPlayers
-	fmt.Printf("There are %d players\n", gm.totalPlayers)
+	fmt.Printf("There are %d players, and you are player %s.\n", gm.totalPlayers, p.no)
 	initOpponents(gm.totalPlayers)
 	return ""
 }
@@ -183,28 +183,28 @@ func chooseDice(args string) string {
 	var die1, die2, terrain, player string
 
 	fmt.Println("Choose first die by number")
-	_, err := fmt.Scanf("%d", &n)
+	_, err := fmt.Scan(&n)
 	for err != nil || n > 3 || n < 1 {
 		if err != nil {
 			fmt.Println(err)
 		} else {
 			fmt.Println("Out of range, choose first die by number")
 		}
-		_, err = fmt.Scanf("%d", &n)
+		_, err = fmt.Scan(&n)
 	}
 	die1 = rolledDice[n]
 
 	fmt.Println("Choose second die by number")
-	_, err = fmt.Scanf("%d", &n)
+	_, err = fmt.Scan(&n)
 	for err != nil || n > 3 || n < 1 || rolledDice[n] == die1 {
 		if err != nil {
-			fmt.Println("Please enter a valid number!")
+			fmt.Println(err)
+		} else if n > 3 || n < 1 {
+			fmt.Println("Out of range, choose second die by number")
 		} else if rolledDice[n] == die1 {
 			fmt.Println("Die has chosen, enter another number for second die")
-		} else {
-			fmt.Println("Out of range, choose second die by number")
 		}
-		_, err = fmt.Scanf("%d", &n)
+		_, err = fmt.Scan(&n)
 	}
 	die2 = rolledDice[n]
 
@@ -214,14 +214,14 @@ func chooseDice(args string) string {
 	for i, opponent := range opponents {
 		fmt.Printf("%d. Player%s\n", i+1, opponent.no)
 	}
-	_, err = fmt.Scanf("%d", &n)
+	_, err = fmt.Scan(&n)
 	for err != nil || n > len(opponents) || n < 1 {
 		if err != nil {
-			fmt.Println("Please enter a valid number!")
+			fmt.Println(err)
 		} else {
 			fmt.Println("Out of range, choose Player that you want to interrogate by number")
 		}
-		_, err = fmt.Scanf("%d", &n)
+		_, err = fmt.Scan(&n)
 	}
 	player = opponents[n-1].no
 
@@ -233,10 +233,10 @@ func SendInterrogation(args string) string {
 	stringSlice := strings.Split(args, ":")
 	stringSlice2 := strings.Split(stringSlice[1], ",")
 
-	fmt.Printf("Player %s asks %s how many locations they've searched between %s and %s in %s terrain.\n",
+	fmt.Printf("%s asks %s how many locations they've searched between %s and %s in %s terrain.\n",
 		stringSlice2[5], stringSlice2[4], stringSlice2[0], stringSlice2[1], stringSlice2[2])
 
-	fmt.Printf("Player %s responds %s.\n",
+	fmt.Printf("%s responds %s.\n",
 		stringSlice2[4], stringSlice2[3])
 	return ""
 }
