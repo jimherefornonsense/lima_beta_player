@@ -1,1 +1,1 @@
-# beta-player.
+# beta-player
