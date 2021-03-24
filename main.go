@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	tkncmp "./computer"
 	"./player"
@@ -16,6 +18,7 @@ import (
 type Game struct {
 	totalPlayers  int
 	activePlayers int
+	mode          int
 	leftTokens    []string
 }
 
@@ -139,98 +142,160 @@ func playerTurn(args string) string {
 func terrainParser(t1 string, t2 string) string {
 	terrainMap := map[string]string{"B": "Beach", "F": "Forest", "M": "Mountain", "A": "All terrians"}
 	var t string = "A"
-	if t1 == "W" && t2 == "W" {
-		fmt.Println("Choose Terrian:")
-		for k, v := range terrainMap {
-			fmt.Printf("%s: %s\n", k, v)
+	if g.mode == 2 {
+		var terrain_keys = [4]string{"B", "F", "M", "A"}
+		if t1 == "W" && t2 == "W" {
+			fmt.Println("first:")
+			for k, v := range terrainMap {
+				fmt.Printf("%s: %s\n", k, v)
+			}
+			randomIndex := rand.Intn(len(terrain_keys))
+			t = terrain_keys[randomIndex]
+		} else if t1 == "W" && t2 != "W" {
+			fmt.Println("second:")
+			randomIndex := rand.Intn(len(terrain_keys))
+			t = terrain_keys[randomIndex]
+			for t != "A" && t != t2 {
+				randomIndex := rand.Intn(len(terrain_keys))
+				t = terrain_keys[randomIndex]
+			}
+		} else if t1 != "W" && t2 == "W" {
+			fmt.Println("third:")
+			randomIndex := rand.Intn(len(terrain_keys))
+			t = terrain_keys[randomIndex]
+
+			for t != "A" && t != t1 {
+				randomIndex := rand.Intn(len(terrain_keys))
+				t = terrain_keys[randomIndex]
+			}
+		} else if t1 == t2 {
+			fmt.Println("fourth:")
+			return t1
 		}
-		fmt.Scanf("%s", &t)
-		t = strings.ToUpper(t)
-		_, found := terrainMap[t]
-		for !found {
-			fmt.Println("Invalid terrain, Choose Terrian:")
+		return t
+	} else {
+		if t1 == "W" && t2 == "W" {
+			fmt.Println("Choose Terrian:")
+			for k, v := range terrainMap {
+				fmt.Printf("%s: %s\n", k, v)
+			}
 			fmt.Scanf("%s", &t)
 			t = strings.ToUpper(t)
-			_, found = terrainMap[t]
-		}
-	} else if t1 == "W" && t2 != "W" {
-		fmt.Println("Choose Terrian:")
-		fmt.Printf("%s: %s\n", t2, terrainMap[t2])
-		fmt.Printf("A: %s\n", terrainMap["A"])
-		fmt.Scanf("%s", &t)
-		t = strings.ToUpper(t)
-		for t != "A" && t != t2 {
-			fmt.Println("Invalid terrain, Choose Terrian:")
+			_, found := terrainMap[t]
+			for !found {
+				fmt.Println("Invalid terrain, Choose Terrian:")
+				fmt.Scanf("%s", &t)
+				t = strings.ToUpper(t)
+				_, found = terrainMap[t]
+			}
+		} else if t1 == "W" && t2 != "W" {
+			fmt.Println("Choose Terrian:")
+			fmt.Printf("%s: %s\n", t2, terrainMap[t2])
+			fmt.Printf("A: %s\n", terrainMap["A"])
 			fmt.Scanf("%s", &t)
 			t = strings.ToUpper(t)
-		}
-	} else if t1 != "W" && t2 == "W" {
-		fmt.Println("Choose Terrian:")
-		fmt.Printf("%s: %s\n", t1, terrainMap[t1])
-		fmt.Printf("A: %s\n", terrainMap["A"])
-		fmt.Scanf("%s", &t)
-		t = strings.ToUpper(t)
-		for t != "A" && t != t1 {
-			fmt.Println("Invalid terrain, Choose Terrian:")
+			for t != "A" && t != t2 {
+				fmt.Println("Invalid terrain, Choose Terrian:")
+				fmt.Scanf("%s", &t)
+				t = strings.ToUpper(t)
+			}
+		} else if t1 != "W" && t2 == "W" {
+			fmt.Println("Choose Terrian:")
+			fmt.Printf("%s: %s\n", t1, terrainMap[t1])
+			fmt.Printf("A: %s\n", terrainMap["A"])
 			fmt.Scanf("%s", &t)
 			t = strings.ToUpper(t)
+			for t != "A" && t != t1 {
+				fmt.Println("Invalid terrain, Choose Terrian:")
+				fmt.Scanf("%s", &t)
+				t = strings.ToUpper(t)
+			}
+		} else if t1 == t2 {
+			return t1
 		}
-	} else if t1 == t2 {
-		return t1
+		return t
 	}
-	return t
 }
 
 func chooseDice(args string) string {
 	rolledDice := strings.Split(args[3:], ",")
-	var n int
-	var die1, die2, terrain, plr string
 
-	fmt.Println("Choose first die by number")
-	_, err := fmt.Scan(&n)
-	for err != nil || n > 3 || n < 1 {
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Out of range, choose first die by number")
+	if g.mode == 2 {
+		var die1, die2, plr int
+		var terrain string
+		rand.Seed(time.Now().UTC().UnixNano())
+		die1 = randInt(1, 3)
+		die2 = randInt(1, 3)
+		for die2 == die1 {
+			die2 = randInt(1, 3)
+		}
+
+		terrain = terrainParser(string(rolledDice[die1][2]), string(rolledDice[die2][2]))
+
+		plr = randInt(1, len(opponents)+1)
+		for strconv.Itoa(plr) == p.No {
+			plr = randInt(1, len(opponents)+1)
+		}
+		var temp string = "05:" + rolledDice[die1] + "," + rolledDice[die2] + "," + terrain + ",P" + strconv.Itoa(plr)
+		fmt.Println(die1)
+		fmt.Println(die2)
+		fmt.Println(p.No)
+		fmt.Println(strconv.Itoa(plr))
+		fmt.Println(len(opponents))
+		fmt.Println("temp-" + temp)
+		return temp
+	} else {
+		var n int
+		var die1, die2, terrain, plr string
+
+		fmt.Println("Choose first die by number")
+		_, err := fmt.Scan(&n)
+		for err != nil || n > 3 || n < 1 {
+			if err != nil {
+				fmt.Println(err)
+			} else {
+				fmt.Println("Out of range, choose first die by number")
+			}
+			_, err = fmt.Scan(&n)
+		}
+		die1 = rolledDice[n]
+		//fmt.Println("die1:", die1)
+
+		fmt.Println("Choose second die by number")
+		_, err = fmt.Scan(&n)
+		for err != nil || n > 3 || n < 1 || rolledDice[n] == die1 {
+			if err != nil {
+				fmt.Println(err)
+			} else if n > 3 || n < 1 {
+				fmt.Println("Out of range, choose second die by number")
+			} else if rolledDice[n] == die1 {
+				fmt.Println("Die has chosen, enter another number for second die")
+			}
+			_, err = fmt.Scan(&n)
+		}
+		die2 = rolledDice[n]
+		//fmt.Println("die2:", die2)
+
+		terrain = terrainParser(string(die1[2]), string(die2[2]))
+
+		fmt.Println("Choose Player that you want to interrogate by number")
+		for i, opponent := range opponents {
+			fmt.Printf("%d. Player%s\n", i+1, opponent.No)
 		}
 		_, err = fmt.Scan(&n)
-	}
-	die1 = rolledDice[n]
-
-	fmt.Println("Choose second die by number")
-	_, err = fmt.Scan(&n)
-	for err != nil || n > 3 || n < 1 || rolledDice[n] == die1 {
-		if err != nil {
-			fmt.Println(err)
-		} else if n > 3 || n < 1 {
-			fmt.Println("Out of range, choose second die by number")
-		} else if rolledDice[n] == die1 {
-			fmt.Println("Die has chosen, enter another number for second die")
+		for err != nil || n > len(opponents) || n < 1 {
+			if err != nil {
+				fmt.Println(err)
+			} else {
+				fmt.Println("Out of range, choose Player that you want to interrogate by number")
+			}
+			_, err = fmt.Scan(&n)
 		}
-		_, err = fmt.Scan(&n)
-	}
-	die2 = rolledDice[n]
+		plr = opponents[n-1].No
 
-	terrain = terrainParser(string(die1[2]), string(die2[2]))
-
-	fmt.Println("Choose Player that you want to interrogate by number")
-	for i, opponent := range opponents {
-		fmt.Printf("%d. Player%s\n", i+1, opponent.No)
+		var temp string = "05:" + die1 + "," + die2 + "," + terrain + ",P" + plr
+		return temp
 	}
-	_, err = fmt.Scan(&n)
-	for err != nil || n > len(opponents) || n < 1 {
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Out of range, choose Player that you want to interrogate by number")
-		}
-		_, err = fmt.Scan(&n)
-	}
-	plr = opponents[n-1].No
-
-	var temp string = "05:" + die1 + "," + die2 + "," + terrain + ",P" + plr
-	return temp
 }
 
 func interrogationReport(args string) string {
@@ -320,9 +385,26 @@ func writeToPipe(fd1 *os.File, args string) {
 	fd1.Write([]byte(args))
 }
 
+func randInt(min int, max int) int {
+	// return min + rand.Intn(max-min)
+	return rand.Intn(max-min+1) + min
+}
+
 func main() {
 	var pNo, pipeName, toPN, fromPN string
-
+	var mode int
+	fmt.Println("Do you want player to be controlled by human or by computer? Choose 1 for human and 2 for computer")
+	fmt.Println("1.Human")
+	fmt.Println("2.Computer")
+	fmt.Scanf("%d", &mode)
+	for mode != 1 && mode != 2 {
+		fmt.Println("Invalid selection")
+		fmt.Println("Do you want player to be controlled by human or by computer? Choose 1 for human and 2 for computer")
+		fmt.Println("1.Human")
+		fmt.Println("2.Computer")
+		fmt.Scanf("%d", &mode)
+	}
+	g.mode = mode
 	fmt.Println("Enter your Player Number and pipe Prefixed Name: (separated by space)")
 	fmt.Scanf("%s%s", &pNo, &pipeName)
 	toPN = "/tmp/" + pipeName + "toP" + pNo
