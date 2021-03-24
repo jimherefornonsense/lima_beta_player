@@ -7,25 +7,21 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	tkncmp "./computer"
+	"./player"
 )
 
-// Player struct
-type Player struct {
-	no       string
-	terrains []string
-}
-
-//Game struct
+// Game struct
 type Game struct {
 	totalPlayers  int
 	activePlayers int
 	leftTokens    []string
 }
 
-var p Player
 var g Game
-var opponents []Player
-var tokenMap = [24]string{"1F", "2F", "3F", "4F", "5F", "6F", "7F", "8F", "1B", "2B", "3B", "4B", "5B", "6B", "7B", "8B", "1M", "2M", "3M", "4M", "5M", "6M", "7M", "8M"}
+var p player.Player
+var opponents []player.Player
 
 type fn func(string) string
 
@@ -35,11 +31,11 @@ func selectedFunction(f fn, val string) string { // selectedFunction provides fu
 
 var functions = map[string]fn{
 	"01": g.playerNO,
-	"02": p.readMyTerrain,
+	"02": readMyTerrain,
 	"03": g.leftoverTokens,
 	"04": playerTurn,
 	//"05": chooseDice,
-	"06": SendInterrogation,
+	"06": interrogationReport,
 	//"07": guessTokens,
 	"08": guessCorrect,
 	"09": guessIncorrect,
@@ -56,28 +52,34 @@ func errorMsg(arg string) string {
 func (gm *Game) playerNO(args string) string {
 	gm.totalPlayers, _ = strconv.Atoi(args[len(args)-1:])
 	gm.activePlayers = gm.totalPlayers
-	fmt.Printf("There are %d players, and you are player %s.\n", gm.totalPlayers, p.no)
+	fmt.Printf("There are %d players, and you are player %s.\n", gm.totalPlayers, p.No)
 	initOpponents(gm.totalPlayers)
 	return ""
 }
 
 func initOpponents(totalPlayers int) {
 	for i := 1; i <= totalPlayers; i++ {
-		if strconv.Itoa(i) != p.no {
-			player := Player{no: strconv.Itoa(i)}
-			opponents = append(opponents, player)
+		if strconv.Itoa(i) != p.No {
+			plr := player.NewPlayer(strconv.Itoa(i))
+			opponents = append(opponents, plr)
 		}
 	}
 }
 
-func (pl *Player) readMyTerrain(args string) string {
-	pl.terrains = strings.Split(args[6:], ",")
-	fmt.Println("Terrains are: " + strings.Join(pl.terrains, ", "))
+func readMyTerrain(args string) string {
+	playerTokens := strings.Split(args[6:], ",")
+
+	tkncmp.AllocatedTokensCompute(playerTokens, &p, opponents)
+
+	fmt.Println("Terrains are: " + strings.Join(playerTokens, ", "))
 	return ""
 }
 
 func (gm *Game) leftoverTokens(args string) string {
 	gm.leftTokens = strings.Split(args[3:], ",")
+
+	tkncmp.LeftTokensCompute(gm.leftTokens, &p, opponents)
+
 	fmt.Printf("Leftover tokens: ")
 	for _, x := range gm.leftTokens {
 		fmt.Printf(x + " ")
@@ -89,9 +91,11 @@ func (gm *Game) leftoverTokens(args string) string {
 func tokenInfoSwap(args string) string {
 	message := strings.Split(args[3:], ",")
 
-	if string(message[0][1]) == p.no {
+	if string(message[0][1:]) == p.No {
 		fmt.Printf("You let %s know you got a token %s\n", message[1], message[2])
 	} else {
+		tkncmp.TokenInfoSwapCompute(message[2], message[0][1:], &p, opponents)
+
 		fmt.Printf("You acknowledge %s got a token %s\n", message[0], message[2])
 	}
 	return ""
@@ -109,7 +113,7 @@ func playerTurn(args string) string {
 	message := strings.Split(args[3:], ",")
 
 	fmt.Println("Player " + message[0][1:] + " has rolled " + message[1] + "," + message[2] + "," + message[3])
-	if "P"+p.no != message[0] {
+	if "P"+p.No != message[0] {
 
 		return ""
 	}
@@ -134,7 +138,7 @@ func playerTurn(args string) string {
 
 func terrainParser(t1 string, t2 string) string {
 	terrainMap := map[string]string{"B": "Beach", "F": "Forest", "M": "Mountain", "A": "All terrians"}
-	var t string
+	var t string = "A"
 	if t1 == "W" && t2 == "W" {
 		fmt.Println("Choose Terrian:")
 		for k, v := range terrainMap {
@@ -174,13 +178,13 @@ func terrainParser(t1 string, t2 string) string {
 	} else if t1 == t2 {
 		return t1
 	}
-	return "A"
+	return t
 }
 
 func chooseDice(args string) string {
 	rolledDice := strings.Split(args[3:], ",")
 	var n int
-	var die1, die2, terrain, player string
+	var die1, die2, terrain, plr string
 
 	fmt.Println("Choose first die by number")
 	_, err := fmt.Scan(&n)
@@ -212,7 +216,7 @@ func chooseDice(args string) string {
 
 	fmt.Println("Choose Player that you want to interrogate by number")
 	for i, opponent := range opponents {
-		fmt.Printf("%d. Player%s\n", i+1, opponent.no)
+		fmt.Printf("%d. Player%s\n", i+1, opponent.No)
 	}
 	_, err = fmt.Scan(&n)
 	for err != nil || n > len(opponents) || n < 1 {
@@ -223,18 +227,22 @@ func chooseDice(args string) string {
 		}
 		_, err = fmt.Scan(&n)
 	}
-	player = opponents[n-1].no
+	plr = opponents[n-1].No
 
-	var temp string = "05:" + die1 + "," + die2 + "," + terrain + ",P" + player
+	var temp string = "05:" + die1 + "," + die2 + "," + terrain + ",P" + plr
 	return temp
 }
 
-func SendInterrogation(args string) string {
+func interrogationReport(args string) string {
 	stringSlice := strings.Split(args, ":")
 	stringSlice2 := strings.Split(stringSlice[1], ",")
 
+	if stringSlice2[4][1:] != p.No {
+		tkncmp.PlayerReportCompute(stringSlice2, opponents)
+	}
+
 	fmt.Printf("%s asks %s how many locations they've searched between %s and %s in %s terrain.\n",
-		stringSlice2[5], stringSlice2[4], stringSlice2[0], stringSlice2[1], stringSlice2[2])
+		stringSlice2[5], stringSlice2[4], stringSlice2[0][:2], stringSlice2[1][:2], stringSlice2[2])
 
 	fmt.Printf("%s responds %s.\n",
 		stringSlice2[4], stringSlice2[3])
@@ -242,7 +250,7 @@ func SendInterrogation(args string) string {
 }
 
 func isValidToken(token string) bool {
-	for _, t := range tokenMap {
+	for _, t := range tkncmp.TokenMap {
 		if strings.ToUpper(token) == t {
 			return true
 		}
@@ -271,7 +279,7 @@ func guessTokens() string {
 		}
 		fmt.Scanf("%s", &second_token)
 	}
-	var temp string = "07:P" + p.no + "," + strings.ToUpper(first_token) + "," + strings.ToUpper(second_token)
+	var temp string = "07:P" + p.No + "," + strings.ToUpper(first_token) + "," + strings.ToUpper(second_token)
 	return temp
 }
 
@@ -313,13 +321,14 @@ func writeToPipe(fd1 *os.File, args string) {
 }
 
 func main() {
-	var pipeName, toPN, fromPN string
+	var pNo, pipeName, toPN, fromPN string
 
 	fmt.Println("Enter your Player Number and pipe Prefixed Name: (separated by space)")
-	fmt.Scanf("%s%s", &p.no, &pipeName)
-	toPN = "/tmp/" + pipeName + "toP" + p.no
-	fromPN = "/tmp/" + pipeName + "fromP" + p.no
+	fmt.Scanf("%s%s", &pNo, &pipeName)
+	toPN = "/tmp/" + pipeName + "toP" + pNo
+	fromPN = "/tmp/" + pipeName + "fromP" + pNo
 	fmt.Println(toPN, fromPN)
+	p = player.NewPlayer(pNo)
 
 	fd, err := os.OpenFile(toPN, os.O_RDONLY, os.ModeNamedPipe) // opens toPN named pipe
 	if err != nil {
