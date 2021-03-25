@@ -12,8 +12,8 @@ var directionIndexMap = map[string]int{"NN": 0, "NE": 3, "EE": 6, "SE": 9, "SS":
 func AllocatedTokensCompute(tokens []string, plr *player.Player, opponents []player.Player) {
 	for _, token := range tokens {
 		plr.MakeRecord(token, 1)
-		for _, opponent := range opponents {
-			opponent.MakeRecord(token, 0)
+		for i := range opponents {
+			opponents[i].MakeRecord(token, 0)
 		}
 	}
 }
@@ -21,19 +21,19 @@ func AllocatedTokensCompute(tokens []string, plr *player.Player, opponents []pla
 func LeftTokensCompute(tokens []string, plr *player.Player, opponents []player.Player) {
 	for _, token := range tokens {
 		plr.MakeRecord(token, 0)
-		for _, opponent := range opponents {
-			opponent.MakeRecord(token, 0)
+		for i := range opponents {
+			opponents[i].MakeRecord(token, 0)
 		}
 	}
 }
 
 func TokenInfoSwapCompute(token string, opponentNo string, plr *player.Player, opponents []player.Player) {
 	plr.MakeRecord(token, 0)
-	for _, opponent := range opponents {
+	for i, opponent := range opponents {
 		if opponent.No == opponentNo {
-			opponent.MakeRecord(token, 1)
+			opponents[i].MakeRecord(token, 1)
 		} else {
-			opponent.MakeRecord(token, 0)
+			opponents[i].MakeRecord(token, 0)
 		}
 	}
 }
@@ -55,7 +55,7 @@ func computeTokenStatus(start int, end int, terrainType string, reportedTrnNum i
 	return 2
 }
 
-func PlayerReportCompute(msg []string, opponents []player.Player) {
+func PlayerReportCompute(msg []string, plr *player.Player, opponents []player.Player) {
 	var idxFrom, idxEnd, countEnd, numTrn, status int
 	var plrNo, terrain string
 
@@ -74,24 +74,25 @@ func PlayerReportCompute(msg []string, opponents []player.Player) {
 	for idxFrom != countEnd {
 		token := TokenMap[idxFrom%24]
 		if terrain == "A" || terrain == token[1:] {
-			for _, opponent := range opponents {
+			for i, opponent := range opponents {
 				switch status {
 				case 0:
 					if plrNo == opponent.No {
-						opponent.MakeRecord(token, 0)
+						opponents[i].MakeRecord(token, 0)
 					} else {
-						opponent.MakeRecord(token, 2)
+						opponents[i].MakeRecord(token, 2)
 					}
 				case 1:
 					if plrNo == opponent.No {
-						opponent.MakeRecord(token, 1)
+						opponents[i].MakeRecord(token, 1)
+						plr.MakeRecord(token, 0)
 					} else {
-						opponent.MakeRecord(token, 0)
+						opponents[i].MakeRecord(token, 0)
 					}
 				// Incomplete case, could find centain tokens
 				case 2:
 					if plrNo == opponent.No {
-						opponent.MakeRecord(token, 2)
+						opponents[i].MakeRecord(token, 2)
 					}
 				}
 			}
