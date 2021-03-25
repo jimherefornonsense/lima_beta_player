@@ -10,8 +10,9 @@ import (
 	"strings"
 	"time"
 
-	tkncmp "./computer"
-	"./player"
+	tkncmp "github.com/jimherefornonsense/lima_beta_player/computer"
+
+	"github.com/jimherefornonsense/lima_beta_player/player"
 )
 
 // Game struct

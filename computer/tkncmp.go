@@ -3,7 +3,7 @@ package tkncmp
 import (
 	"strconv"
 
-	"../player"
+	"github.com/jimherefornonsense/lima_beta_player/player"
 )
 
 var TokenMap = [24]string{"1F", "1B", "1M", "2F", "2B", "2M", "3F", "3B", "3M", "4F", "4B", "4M", "5F", "5B", "5M", "6F", "6B", "6M", "7F", "7B", "7M", "8F", "8B", "8M"}
@@ -88,7 +88,7 @@ func PlayerReportCompute(msg []string, opponents []player.Player) {
 					} else {
 						opponent.MakeRecord(token, 0)
 					}
-				// Incomplete case, could find centern tokens
+				// Incomplete case, could find centain tokens
 				case 2:
 					if plrNo == opponent.No {
 						opponent.MakeRecord(token, 2)
