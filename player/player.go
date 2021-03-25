@@ -16,6 +16,7 @@ type terrains struct {
 // Table's indices corresponse to island map's regions, ex: index 0 = region 1, index 1 = region 2
 type Player struct {
 	No    string
+	PlayerTerrains    []string
 	Table [8]terrains
 }
 

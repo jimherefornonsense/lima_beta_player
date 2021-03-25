@@ -20,6 +20,8 @@ type Game struct {
 	totalPlayers  int
 	activePlayers int
 	mode          int
+	current_round int
+	maximum_rounds int
 	leftTokens    []string
 }
 
@@ -74,7 +76,9 @@ func readMyTerrain(args string) string {
 	playerTokens := strings.Split(args[6:], ",")
 
 	tkncmp.AllocatedTokensCompute(playerTokens, &p, opponents)
-
+	for _, token := range playerTokens {
+    p.PlayerTerrains  = append(p.PlayerTerrains,token)
+	}
 	fmt.Println("Terrains are: " + strings.Join(playerTokens, ", "))
 	return ""
 }
@@ -113,6 +117,7 @@ func remainingWinner(args string) string {
 	return ""
 }
 
+
 func playerTurn(args string) string {
 	message := strings.Split(args[3:], ",")
 
@@ -121,6 +126,12 @@ func playerTurn(args string) string {
 
 		return ""
 	}
+	if g.mode==2{
+		if g.current_round == g.maximum_rounds {
+			g.current_round=0
+			return guessTokens()
+		}
+	} else {
 	var response string
 	fmt.Println("Would you like to guess? Y/N")
 	fmt.Scanln(&response)
@@ -132,12 +143,15 @@ func playerTurn(args string) string {
 	}
 	if response == "Y" {
 		return guessTokens()
-	}
+	} else {
 	fmt.Println("Choose any two dice options from the following or choose A")
 	for j := 1; j < len(message); j++ {
 		fmt.Printf("%d. %s\n", j, message[j])
 	}
-	return chooseDice(args)
+
+}
+	}
+return chooseDice(args)
 }
 
 func terrainParser(t1 string, t2 string) string {
@@ -219,6 +233,7 @@ func terrainParser(t1 string, t2 string) string {
 }
 
 func chooseDice(args string) string {
+	g.current_round++;
 	rolledDice := strings.Split(args[3:], ",")
 
 	if g.mode == 2 {
@@ -324,7 +339,40 @@ func isValidToken(token string) bool {
 	return false
 }
 
+
 func guessTokens() string {
+	
+	if g.mode == 2 {
+		
+			
+		var first_token string
+	    var second_token string
+		randomIndex := rand.Intn(len(tkncmp.TokenMap))
+        first_token = tkncmp.TokenMap[randomIndex]
+		_, found := Find(p.PlayerTerrains, first_token)
+		for found {
+			randomIndex := rand.Intn(len(tkncmp.TokenMap))
+        first_token = tkncmp.TokenMap[randomIndex]
+		_, found = Find(p.PlayerTerrains, first_token)
+		}
+
+		randomIndex2 := rand.Intn(len(tkncmp.TokenMap))
+        second_token = tkncmp.TokenMap[randomIndex2]
+		_, found2 := Find(p.PlayerTerrains, second_token)
+
+		for found2 {
+			randomIndex2 := rand.Intn(len(tkncmp.TokenMap))
+			second_token = tkncmp.TokenMap[randomIndex2]
+		_, found2 = Find(p.PlayerTerrains, second_token)
+		}
+
+		for first_token==second_token {
+			randomIndex := rand.Intn(len(tkncmp.TokenMap))
+			second_token = tkncmp.TokenMap[randomIndex]	
+		}
+		var temp string = "07:P" + p.No + "," + strings.ToUpper(first_token) + "," + strings.ToUpper(second_token)
+		return temp
+	} else {
 	var first_token string
 	var second_token string
 
@@ -348,7 +396,7 @@ func guessTokens() string {
 	var temp string = "07:P" + p.No + "," + strings.ToUpper(first_token) + "," + strings.ToUpper(second_token)
 	return temp
 }
-
+}
 func guessCorrect(args string) string {
 	stringSlice := strings.Split(args, ":")
 	stringSlice2 := strings.Split(stringSlice[1], ",")
@@ -391,9 +439,18 @@ func randInt(min int, max int) int {
 	return rand.Intn(max-min+1) + min
 }
 
+func Find(slice []string, val string) (int, bool) {
+    for i, item := range slice {
+        if item == val {
+            return i, true
+        }
+    }
+    return -1, false
+}
+
 func main() {
 	var pNo, pipeName, toPN, fromPN string
-	var mode int
+	var mode, rounds int
 	fmt.Println("Do you want player to be controlled by human or by computer? Choose 1 for human and 2 for computer")
 	fmt.Println("1.Human")
 	fmt.Println("2.Computer")
@@ -406,6 +463,18 @@ func main() {
 		fmt.Scanf("%d", &mode)
 	}
 	g.mode = mode
+	fmt.Println("Choose the maximum number of rounds you want");
+    fmt.Scanf("%d", &rounds);
+	for rounds<1 {
+		fmt.Println("You should choose the minimum number of rounds to be 1");
+		fmt.Scanf("%d", &rounds);
+	} 
+	for rounds>5 {
+		fmt.Println("You can choose the maximum number of rounds upto 5");
+		fmt.Scanf("%d", &rounds);
+	} 
+	g.maximum_rounds = rounds;
+	g.current_round = 0;
 	fmt.Println("Enter your Player Number and pipe Prefixed Name: (separated by space)")
 	fmt.Scanf("%s%s", &pNo, &pipeName)
 	toPN = "/tmp/" + pipeName + "toP" + pNo
