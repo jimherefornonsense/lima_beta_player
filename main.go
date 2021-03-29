@@ -237,10 +237,11 @@ func terrainParser(t1 string, t2 string) string {
 func chooseDice(args string) string {
 	g.current_round++
 	rolledDice := strings.Split(args[3:], ",")
+	var n, die1, die2 int
+	var terrain string
 
 	if g.mode == 2 {
-		var die1, die2, plr int
-		var terrain string
+		var plr int
 		rand.Seed(time.Now().UTC().UnixNano())
 		die1 = randInt(1, 3)
 		die2 = randInt(1, 3)
@@ -263,8 +264,7 @@ func chooseDice(args string) string {
 		fmt.Println("temp-" + temp)
 		return temp
 	} else {
-		var n int
-		var die1, die2, terrain, plr string
+		var plr string
 
 		fmt.Println("Choose first die by number")
 		_, err := fmt.Scan(&n)
@@ -276,25 +276,25 @@ func chooseDice(args string) string {
 			}
 			_, err = fmt.Scan(&n)
 		}
-		die1 = rolledDice[n]
+		die1 = n
 		//fmt.Println("die1:", die1)
 
 		fmt.Println("Choose second die by number")
 		_, err = fmt.Scan(&n)
-		for err != nil || n > 3 || n < 1 || rolledDice[n] == die1 {
+		for err != nil || n > 3 || n < 1 || n == die1 {
 			if err != nil {
 				fmt.Println(err)
 			} else if n > 3 || n < 1 {
 				fmt.Println("Out of range, choose second die by number")
-			} else if rolledDice[n] == die1 {
+			} else if n == die1 {
 				fmt.Println("Die has chosen, enter another number for second die")
 			}
 			_, err = fmt.Scan(&n)
 		}
-		die2 = rolledDice[n]
+		die2 = n
 		//fmt.Println("die2:", die2)
 
-		terrain = terrainParser(string(die1[2]), string(die2[2]))
+		terrain = terrainParser(rolledDice[die1][2:], rolledDice[die2][2:])
 
 		fmt.Println("Choose Player that you want to interrogate by number")
 		for i, opponent := range opponents {
@@ -311,7 +311,7 @@ func chooseDice(args string) string {
 		}
 		plr = opponents[n-1].No
 
-		var temp string = "05:" + die1 + "," + die2 + "," + terrain + ",P" + plr
+		var temp string = "05:" + rolledDice[die1] + "," + rolledDice[die2] + "," + terrain + ",P" + plr
 		return temp
 	}
 }

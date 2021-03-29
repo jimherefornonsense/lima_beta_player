@@ -38,61 +38,105 @@ func TokenInfoSwapCompute(token string, opponentNo string, plr *player.Player, o
 	}
 }
 
-func computeTokenStatus(start int, end int, terrainType string, reportedTrnNum int) int {
-	// Certain-no
-	if reportedTrnNum == 0 {
+// Number of tokens in a block
+func numTknsInRegion(start string, end string, terrain string) int {
+	var idxFrom, idxEnd, nToken int
+
+	idxFrom = directionIndexMap[start]
+	idxEnd = directionIndexMap[end]
+	if idxEnd <= idxFrom {
+		idxEnd += 24
+	}
+	nToken = idxEnd - idxFrom
+
+	if terrain != "A" {
+		return nToken / 3
+	}
+	return nToken
+}
+
+func computeTokenStatus(start string, end string, terrainType string, reportedTknNum int, tarNo string, opponents []player.Player) int {
+	var tknsToLook, optainedTkns []string
+
+	for _, opponent := range opponents {
+		if tarNo == opponent.No {
+			tknsToLook = opponent.UnfirmedTokensInRegion(start, end, terrainType)
+			optainedTkns = opponent.TokensInRegionByStatus(start, end, terrainType, 1)
+		}
+	}
+	// Unobtained / no unfirmed tokens
+	if reportedTknNum == 0 || len(tknsToLook) == 0 {
 		return 0
 	}
-	// Certain-yes
-	numTrnToLook := end - start
-	if terrainType != "A" {
-		numTrnToLook = numTrnToLook / 3
-	}
-	if reportedTrnNum == numTrnToLook {
+	// Obtained
+	if reportedTknNum-len(optainedTkns) == len(tknsToLook) {
 		return 1
+	} else if reportedTknNum-len(optainedTkns) < len(tknsToLook) {
+		// Treasure check when only one token for checking
+		if len(tknsToLook) == 1 {
+			var isTreasure bool = true
+			for _, opponent := range opponents {
+				if tarNo != opponent.No {
+					if opponent.StatusByToken(tknsToLook[0]) != 0 {
+						isTreasure = false
+					}
+				}
+			}
+			if isTreasure {
+				return 3
+			} else { // Unobtained
+				return 0
+			}
+		}
 	}
-	// Potential
+	// Potential obtained
 	return 2
 }
 
 func PlayerReportCompute(msg []string, plr *player.Player, opponents []player.Player) {
-	var idxFrom, idxEnd, countEnd, numTrn, status int
-	var plrNo, terrain string
+	var idxFrom, idxEnd, itEnd, reportedTknNum, status int
+	var tarNo, terrain string
 
 	idxFrom = directionIndexMap[msg[0][:2]]
 	idxEnd = directionIndexMap[msg[1][:2]]
-	countEnd = idxEnd
+	itEnd = idxEnd
 	// In the case ex: WW:18 to NE:3 or NN:0 to NN:0
 	if idxEnd <= idxFrom {
-		countEnd += 24
+		itEnd += 24
 	}
-	plrNo = msg[4][1:]
+	tarNo = msg[4][1:]
 	terrain = msg[2]
-	numTrn, _ = strconv.Atoi(msg[3])
-	status = computeTokenStatus(idxFrom, countEnd, terrain, numTrn)
+	reportedTknNum, _ = strconv.Atoi(msg[3])
+	status = computeTokenStatus(msg[0][:2], msg[1][:2], terrain, reportedTknNum, tarNo, opponents)
 
-	for idxFrom != countEnd {
+	for idxFrom != itEnd {
 		token := TokenMap[idxFrom%24]
 		if terrain == "A" || terrain == token[1:] {
 			for i, opponent := range opponents {
 				switch status {
 				case 0:
-					if plrNo == opponent.No {
+					if tarNo == opponent.No {
 						opponents[i].MakeRecord(token, 0)
 					} else {
 						opponents[i].MakeRecord(token, 2)
 					}
 				case 1:
-					if plrNo == opponent.No {
+					if tarNo == opponent.No {
 						opponents[i].MakeRecord(token, 1)
 						plr.MakeRecord(token, 0)
 					} else {
 						opponents[i].MakeRecord(token, 0)
 					}
-				// Incomplete case, could find centain tokens
 				case 2:
-					if plrNo == opponent.No {
+					if tarNo == opponent.No {
 						opponents[i].MakeRecord(token, 2)
+					}
+				case 3:
+					if tarNo == opponent.No {
+						opponents[i].MakeRecord(token, 0)
+						plr.MakeRecord(token, 3)
+					} else {
+						opponents[i].MakeRecord(token, 0)
 					}
 				}
 			}
