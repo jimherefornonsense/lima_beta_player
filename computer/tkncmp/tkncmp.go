@@ -55,38 +55,45 @@ func numTknsInRegion(start string, end string, terrain string) int {
 	return nToken
 }
 
-func computeTokenStatus(start string, end string, terrainType string, reportedTknNum int, tarNo string, opponents []player.Player) int {
+func computeTokenStatus(start string, end string, terrainType string, reportedTknNum int, token string, tarNo string, opponents []player.Player) int {
 	var tknsToLook, optainedTkns []string
-
+	var curTknStatus int
+	// Finds the target player
 	for _, opponent := range opponents {
 		if tarNo == opponent.No {
 			tknsToLook = opponent.UnfirmedTokensInRegion(start, end, terrainType)
 			optainedTkns = opponent.TokensInRegionByStatus(start, end, terrainType, 1)
+			curTknStatus = opponent.StatusByToken(token)
 		}
 	}
-	// Unobtained / no unfirmed tokens
-	if reportedTknNum == 0 || len(tknsToLook) == 0 {
-		return 0
-	}
-	// Obtained
-	if reportedTknNum-len(optainedTkns) == len(tknsToLook) {
-		return 1
-	} else if reportedTknNum-len(optainedTkns) < len(tknsToLook) {
-		// Treasure check when only one token for checking
-		if len(tknsToLook) == 1 {
+	// Case 1: Non of unfirmed tokens in the requested region or the checked token's status is firmed
+	if len(tknsToLook) == 0 || curTknStatus == 0 || curTknStatus == 1 || curTknStatus == 3 {
+		return -1
+	} else if len(tknsToLook) == 1 { // Case 2: 1 of unfirmed tokens in the requested region
+		// Subcase 1
+		if reportedTknNum-len(optainedTkns) == 0 {
 			var isTreasure bool = true
 			for _, opponent := range opponents {
+				// Checks non-targeted oppoents
 				if tarNo != opponent.No {
-					if opponent.StatusByToken(tknsToLook[0]) != 0 {
+					if opponent.StatusByToken(token) != 0 {
 						isTreasure = false
 					}
 				}
 			}
 			if isTreasure {
 				return 3
-			} else { // Unobtained
-				return 0
 			}
+			return 0
+		} else if reportedTknNum-len(optainedTkns) == 1 { // Subcase 2
+			return 1
+		}
+	} else if len(tknsToLook) > 1 { // Case 3: More than 1 of unfirmed tokens in the requested region
+		// Subcase 1
+		if reportedTknNum-len(optainedTkns) == 0 {
+			return 0
+		} else if reportedTknNum-len(optainedTkns) == len(tknsToLook) { // Subcase 2
+			return 1
 		}
 	}
 	// Potential obtained
@@ -94,7 +101,7 @@ func computeTokenStatus(start string, end string, terrainType string, reportedTk
 }
 
 func PlayerReportCompute(msg []string, plr *player.Player, opponents []player.Player) {
-	var idxFrom, idxEnd, itEnd, reportedTknNum, status int
+	var idxFrom, idxEnd, itEnd, reportedTknNum int
 	var tarNo, terrain string
 
 	idxFrom = directionIndexMap[msg[0][:2]]
@@ -107,37 +114,39 @@ func PlayerReportCompute(msg []string, plr *player.Player, opponents []player.Pl
 	tarNo = msg[4][1:]
 	terrain = msg[2]
 	reportedTknNum, _ = strconv.Atoi(msg[3])
-	status = computeTokenStatus(msg[0][:2], msg[1][:2], terrain, reportedTknNum, tarNo, opponents)
 
 	for idxFrom != itEnd {
+		// A current token in the searched region
 		token := TokenMap[idxFrom%24]
 		if terrain == "A" || terrain == token[1:] {
+			status := computeTokenStatus(msg[0][:2], msg[1][:2], terrain, reportedTknNum, token, tarNo, opponents)
 			for i, opponent := range opponents {
 				switch status {
-				case 0:
+				case 0: // The target player doesn't have the token
 					if tarNo == opponent.No {
 						opponents[i].MakeRecord(token, 0)
 					} else {
 						opponents[i].MakeRecord(token, 2)
 					}
-				case 1:
+				case 1: // The target player has the token
 					if tarNo == opponent.No {
 						opponents[i].MakeRecord(token, 1)
 						plr.MakeRecord(token, 0)
 					} else {
 						opponents[i].MakeRecord(token, 0)
 					}
-				case 2:
+				case 2: // The target player maybe have the token
 					if tarNo == opponent.No {
 						opponents[i].MakeRecord(token, 2)
 					}
-				case 3:
+				case 3: // Finds the treasure
 					if tarNo == opponent.No {
 						opponents[i].MakeRecord(token, 0)
 						plr.MakeRecord(token, 3)
 					} else {
 						opponents[i].MakeRecord(token, 0)
 					}
+				default: // Does nothing
 				}
 			}
 		}

@@ -118,23 +118,24 @@ func (plr *Player) UnfirmedTokensInRegion(start string, end string, terrain stri
 
 // Prints the matrix of current table
 func (plr *Player) DisplayTable() {
-	fmt.Printf("-------------Player%s-------------\n", plr.No)
-	fmt.Printf("%10s", "Region: ")
+	fmt.Printf("--------------Player%s--------------\n", plr.No)
+	fmt.Printf("%10sNN NE EE SE SS SW WW NW NN\n", "Direction:")
+	fmt.Printf("%11s", "Region: ")
 	for i := 1; i < 9; i++ {
 		fmt.Printf("R%d ", i)
 	}
 	fmt.Print("\n")
-	fmt.Printf("%10s", "Beach: ")
+	fmt.Printf("%11s", "Beach: ")
 	for _, trs := range plr.Table {
 		fmt.Printf("%2d ", trs.Beach)
 	}
 	fmt.Print("\n")
-	fmt.Printf("%10s", "Forest: ")
+	fmt.Printf("%11s", "Forest: ")
 	for _, trs := range plr.Table {
 		fmt.Printf("%2d ", trs.Forest)
 	}
 	fmt.Print("\n")
-	fmt.Printf("%10s", "Mountain: ")
+	fmt.Printf("%11s", "Mountain: ")
 	for _, trs := range plr.Table {
 		fmt.Printf("%2d ", trs.Mountain)
 	}
