@@ -128,17 +128,40 @@ func playerTurn(args string) string {
 		for _, opponent := range opponents {
 			opponent.DisplayTable()
 		}
-		var final_guesses int = 0
-			 for i := range p.Table {
-			 if p.Table[i].Beach == 3||p.Table[i].Forest == 3||p.Table[i].Mountain == 3 {
-				final_guesses++;
-			 }
+		
 
+		var final_guesses_first int = 0
+		var final_guesses_second int = 0
+			 for i := range p.Table {
+			 if p.Table[i].Beach==-1  {
+				final_guesses_first++;
+			 } else if p.Table[i].Forest==-1  {
+				final_guesses_first++;
+			 } else if p.Table[i].Mountain==-1   {
+				final_guesses_first++;
 			}
 
-			if final_guesses >= 2 {
-				return guessTokens()
-			} 
+
+			}
+			for i := range p.Table {
+				if p.Table[i].Beach==3  {
+					final_guesses_second++;
+				} else if p.Table[i].Forest==3  {
+					final_guesses_second++;
+				} else if p.Table[i].Mountain==3  {
+					final_guesses_second++;
+			   }
+   
+			   }
+if final_guesses_second==2 {
+	return guessTokens();
+} else if final_guesses_first==1 && final_guesses_second==1 {
+	return guessTokens();
+
+} else if final_guesses_second==2  {
+	return guessTokens();
+
+}
 	} else {
 		var response string
 
@@ -420,20 +443,27 @@ func guessTokens() string {
 	if g.mode == 2 {
 			
 		for i := range p.Table {
-			if p.Table[i].Beach == 3 {
+			if p.Table[i].Beach==-1  {
 				tokens = append(tokens,strconv.Itoa(i+1)+"B")
-			} else if p.Table[i].Forest == 3 {
+
+			} else if p.Table[i].Forest==-1  {
 				tokens = append(tokens,strconv.Itoa(i+1)+"F")
-
-			} else if p.Table[i].Mountain == 3 {
+			} else if p.Table[i].Mountain==-1   {
 				tokens = append(tokens,strconv.Itoa(i+1)+"M")
-
-			}
-if len(tokens) >=2 {
-	break;
-}
 		   }
 
+
+		   }
+		   for i := range p.Table {
+			   if p.Table[i].Beach==3  {
+				tokens = append(tokens,strconv.Itoa(i+1)+"B")
+			   } else if p.Table[i].Forest==3  {
+				tokens = append(tokens,strconv.Itoa(i+1)+"F")
+			   } else if p.Table[i].Mountain==3  {
+				tokens = append(tokens,strconv.Itoa(i+1)+"M")
+			  }
+  
+			  }
 
 		   
 
