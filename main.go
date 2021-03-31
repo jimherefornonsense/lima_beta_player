@@ -8,7 +8,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"lima_beta_player/computer/tkncmp"
 	"lima_beta_player/player"
@@ -125,10 +124,51 @@ func playerTurn(args string) string {
 	}
 
 	if g.mode == 2 {
-		if g.current_round == g.maximum_rounds {
-			g.current_round = 0
-			return guessTokens()
+		p.DisplayTable()
+		for _, opponent := range opponents {
+			opponent.DisplayTable()
 		}
+		
+
+		var final_guesses_first int = 0
+		var total_guesses int = 0
+			 for i := range p.Table {
+			 if p.Table[i].Beach!=-1 &&  p.Table[i].Beach!=3  {
+				final_guesses_first++;
+			 } 
+			total_guesses++;
+
+			}
+			fmt.Println("final_guesses")
+			fmt.Println(final_guesses_first)
+			for i := range p.Table {
+			  if p.Table[i].Forest!=-1 && p.Table[i].Forest!=3  {
+				   final_guesses_first++;
+				} 
+			   total_guesses++;
+   
+			   }
+			   fmt.Println("final_guesses")
+			fmt.Println(final_guesses_first)
+			   for i := range p.Table {
+			if p.Table[i].Mountain!=-1 && p.Table[i].Mountain!=3 {
+				   final_guesses_first++;
+			   }
+			   total_guesses++;
+   
+			   }
+			   fmt.Println("final_guesses")
+			fmt.Println(final_guesses_first)
+			fmt.Println("total")
+			fmt.Println(total_guesses)
+			
+			fmt.Println("remaining")
+			fmt.Println(total_guesses-final_guesses_first)
+if total_guesses-final_guesses_first==2 {
+	return guessTokens();
+} 
+
+
 	} else {
 		var response string
 
@@ -241,13 +281,74 @@ func chooseDice(args string) string {
 	var terrain string
 
 	if g.mode == 2 {
-		var plr int
-		rand.Seed(time.Now().UTC().UnixNano())
-		die1 = randInt(1, 3)
-		die2 = randInt(1, 3)
-		for die2 == die1 {
-			die2 = randInt(1, 3)
+		var plr int=0
+	    message := strings.Split(args[3:], ",")
+		var regions []int
+		for j := 1; j < len(message); j++ {
+			regions = append(regions,player.TableIndexMap[message[j][:2]]) 
 		}
+
+		for j := 1; j < len(regions); j++ {
+         fmt.Println(regions[j])
+		}
+		
+			
+             
+				 var total_potentials1 int = 0
+				 var total_potentials2 int = 0
+
+				 var intials1 int = 0
+				 var intials2 int = 0
+
+				 var ratios1 float64 = 0
+				 var ratios2 float64 = 0
+				for i := regions[0]; i<=regions[1]; i++  {
+					//for j := regions[0]; i<=regions[1]; i++  {
+						for j := range opponents {
+                   if opponents[j].Table[i].Beach==2||opponents[j].Table[i].Forest==2||opponents[j].Table[i].Mountain==2 {
+					total_potentials1++;
+				   } else if opponents[j].Table[i].Beach==-1||opponents[j].Table[i].Forest==-1||opponents[j].Table[i].Mountain==-1 {
+					intials1++;
+				   }
+				}
+			}
+				
+
+				for i := regions[1]; i<=regions[2]; i++  {
+					for j := range opponents {
+						if opponents[j].Table[i].Beach==2||opponents[j].Table[i].Forest==2||opponents[j].Table[i].Mountain==2 {
+							total_potentials2++;
+						   } else if opponents[j].Table[i].Beach==-1||opponents[j].Table[i].Forest==-1||opponents[j].Table[i].Mountain==-1 {
+							intials2++;
+						   }
+					}
+				}
+
+				ratios1 = float64(intials1)/float64(intials1+total_potentials1)
+				ratios2 = float64(intials2)/float64(intials2+total_potentials2)
+
+if ratios1==ratios2 {
+if(regions[1]-regions[0]<regions[2]-regions[1]) {
+die1=1
+die2=2
+} else {
+	die1=2
+	die2=3
+}
+} else {
+	if ratios1<ratios2 {
+		die1=1
+		die2=2
+	} else {
+		die1=2
+		die2=3
+	}
+
+}
+                  
+		
+
+		
 
 		terrain = terrainParser(string(rolledDice[die1][2]), string(rolledDice[die2][2]))
 
@@ -345,8 +446,36 @@ func guessTokens() string {
 	var first_token string
 	var second_token string
 
+	var tokens []string
 	if g.mode == 2 {
-		randomIndex := rand.Intn(len(tkncmp.TokenMap))
+			
+		for i := range p.Table {
+			if p.Table[i].Beach==-1  {
+				tokens = append(tokens,strconv.Itoa(i+1)+"B")
+
+			} else if p.Table[i].Forest==-1  {
+				tokens = append(tokens,strconv.Itoa(i+1)+"F")
+			} else if p.Table[i].Mountain==-1   {
+				tokens = append(tokens,strconv.Itoa(i+1)+"M")
+		   }
+
+
+		   }
+		   for i := range p.Table {
+			   if p.Table[i].Beach==3  {
+				tokens = append(tokens,strconv.Itoa(i+1)+"B")
+			   } else if p.Table[i].Forest==3  {
+				tokens = append(tokens,strconv.Itoa(i+1)+"F")
+			   } else if p.Table[i].Mountain==3  {
+				tokens = append(tokens,strconv.Itoa(i+1)+"M")
+			  }
+  
+			  }
+
+		   
+
+/*	
+	randomIndex := rand.Intn(len(tkncmp.TokenMap))
 		first_token = tkncmp.TokenMap[randomIndex]
 		_, found := Find(p.PlayerTerrains, first_token)
 		for found {
@@ -363,10 +492,10 @@ func guessTokens() string {
 			second_token = tkncmp.TokenMap[randomIndex2]
 			_, found2 = Find(p.PlayerTerrains, second_token)
 		}
+*/
+		fmt.Println("Submitting a guess:", tokens[0], tokens[1])
 
-		fmt.Println("Submitting a guess:", first_token, second_token)
-
-		var temp string = "07:P" + p.No + "," + strings.ToUpper(first_token) + "," + strings.ToUpper(second_token)
+		var temp string = "07:P" + p.No + "," + tokens[0]+ "," + tokens[1]
 		return temp
 	} else {
 		fmt.Println("Choose first token: ")
@@ -444,7 +573,7 @@ func Find(slice []string, val string) (int, bool) {
 
 func main() {
 	var pNo, pipeName, toPN, fromPN string
-	var mode, rounds int
+	var mode int
 
 	// Mode of human-controlled or computer-controlled
 	fmt.Println("Do you want player to be controlled by human or by computer? Choose 1 for human and 2 for computer")
@@ -462,17 +591,17 @@ func main() {
 
 	// Set maximum round
 	if g.mode == 2 {
-		fmt.Println("Choose the maximum number of rounds you want")
-		fmt.Scanf("%d", &rounds)
-		for rounds < 1 {
-			fmt.Println("You should choose the minimum number of rounds to be 1")
-			fmt.Scanf("%d", &rounds)
-		}
+	//	fmt.Println("Choose the maximum number of rounds you want")
+	//	fmt.Scanf("%d", &rounds)
+	//	for rounds < 1 {
+	//		fmt.Println("You should choose the minimum number of rounds to be 1")
+	//		fmt.Scanf("%d", &rounds)
+	//	}
 		// for rounds > 5 {
 		// 	fmt.Println("You can choose the maximum number of rounds upto 5")
 		// 	fmt.Scanf("%d", &rounds)
 		// }
-		g.maximum_rounds = rounds
+	//	g.maximum_rounds = rounds
 		g.current_round = 0
 	}
 
