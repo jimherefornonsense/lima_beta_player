@@ -75,6 +75,11 @@ func readMyTerrain(args string) string {
 	playerTokens := strings.Split(args[6:], ",")
 
 	tkncmp.AllocatedTokensCompute(playerTokens, &p, opponents)
+	// Init lists of potential obtained tokens for opponets
+	for i, _ := range opponents {
+		opponents[i].InitPotentialObtainedTknsList(len(playerTokens))
+	}
+
 	for _, token := range playerTokens {
 		p.PlayerTerrains = append(p.PlayerTerrains, token)
 	}

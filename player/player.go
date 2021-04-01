@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-// Status flag -1: no mark, 0: unobtained, 1: obtained, 2: potential obtained 3: treasure
+// Status flag -1: no mark, 0: unobtained, 1: obtained, 2: treasure
 type terrains struct {
 	Beach    int
 	Forest   int
@@ -18,6 +18,8 @@ type Player struct {
 	No             string
 	PlayerTerrains []string
 	Table          [8]terrains
+	// Format ex: {1:{{1B, 2B, 3B}, {1F, 2F}}, 2:{{2B, 3B, 4B}}...}
+	PotentialObtainedTknsList map[int][][]string
 }
 
 var tableIndexMap = map[string]int{"NN": 0, "NE": 1, "EE": 2, "SE": 3, "SS": 4, "SW": 5, "WW": 6, "NW": 7}
@@ -32,25 +34,36 @@ func NewPlayer(playerNo string) Player {
 	return plr
 }
 
+func (plr *Player) InitPotentialObtainedTknsList(maxTkns int) {
+	plr.PotentialObtainedTknsList = make(map[int][][]string)
+	for i := 1; i <= maxTkns; i++ {
+		plr.PotentialObtainedTknsList[i] = [][]string{}
+	}
+}
+
 // Parses each token and makes a record
-// Status flag -1: no mark, 0: unobtained, 1: obtained, 2: potential obtained 3: treasure
+// Status flag -1: no mark, 0: unobtained, 1: obtained, 2: treasure
 // token format ex: 1B, 2F, 3M
 func (plr *Player) MakeRecord(token string, tokenStatus int) {
 	region, _ := strconv.Atoi(token[0:1])
 	terrain := token[1:]
 	if terrain == "B" {
-		if plr.Table[region-1].Beach == -1 || plr.Table[region-1].Beach == 2 {
+		if plr.Table[region-1].Beach == -1 {
 			plr.Table[region-1].Beach = tokenStatus
 		}
 	} else if terrain == "F" {
-		if plr.Table[region-1].Forest == -1 || plr.Table[region-1].Forest == 2 {
+		if plr.Table[region-1].Forest == -1 {
 			plr.Table[region-1].Forest = tokenStatus
 		}
 	} else if terrain == "M" {
-		if plr.Table[region-1].Mountain == -1 || plr.Table[region-1].Mountain == 2 {
+		if plr.Table[region-1].Mountain == -1 {
 			plr.Table[region-1].Mountain = tokenStatus
 		}
 	}
+}
+
+func (plr *Player) RecordPotentialCandidates(nTokens int, candidates []string) {
+	plr.PotentialObtainedTknsList[nTokens] = append(plr.PotentialObtainedTknsList[nTokens], candidates)
 }
 
 // Checks token status
@@ -70,7 +83,8 @@ func (plr *Player) StatusByToken(token string) int {
 	return status
 }
 
-//Reports tokens in a block according to its status
+// Reports tokens in a block according to its status
+// The checking order of tokens are fixed in order to match the order in token map: terrain order B F M
 func (plr *Player) TokensInRegionByStatus(start string, end string, terrain string, checkedStatus int) []string {
 	var itStart, itEnd int
 	var tokens []string
@@ -109,11 +123,6 @@ func (plr *Player) TokensInRegionByStatus(start string, end string, terrain stri
 	}
 
 	return tokens
-}
-
-// Checks tokens in a block of status -1 and 2
-func (plr *Player) UnfirmedTokensInRegion(start string, end string, terrain string) []string {
-	return append(plr.TokensInRegionByStatus(start, end, terrain, -1), plr.TokensInRegionByStatus(start, end, terrain, 2)...)
 }
 
 // Prints the matrix of current table
