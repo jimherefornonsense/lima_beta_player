@@ -290,10 +290,15 @@ func chooseDice(args string) string {
 		for j := 0; j < len(regions); j++ {
 			fmt.Println(regions[j])
 		}
+		fmt.Println("regions")
+		for j := 0; j < len(regions); j++ {
+			fmt.Println(regions[j])
+		}
 
-		var total_potentials1 int = 0
-		var total_potentials2 int = 0
-		var total_potentials3 int = 0
+		var total_potentials1 float64 = 0
+		var total_potentials2 float64 = 0
+		var total_potentials3 float64 = 0
+
 		opponent_potentials1 := make([]int, len(opponents))
 		opponent_potentials2 := make([]int, len(opponents))
 		opponent_potentials3 := make([]int, len(opponents))
@@ -302,47 +307,61 @@ func chooseDice(args string) string {
 		opponents_intials3 := make([]int, len(opponents))
 		opponents_ratios := make([]float64, len(opponents))
 
-		var initials1 int = 0
-		var initials2 int = 0
-		var initials3 int = 0
+		var initials1 float64 = 0
+		var initials2 float64 = 0
+		var initials3 float64 = 0
+
 		var ratios1 float64 = 0
 		var ratios2 float64 = 0
 		var ratios3 float64 = 0
-		var num_tokens1 int = tkncmp.NumTknsInRegion(message[1][:2], message[2][:2], "A")
-		var num_tokens2 int = tkncmp.NumTknsInRegion(message[2][:2], message[3][:2], "A")
-		var num_tokens3 int = tkncmp.NumTknsInRegion(message[1][:2], message[3][:2], "A")
+
+		var num_tokens1 float64 = math.Min(float64(tkncmp.NumTknsInRegion(message[1][:2], message[2][:2], "A")), float64(tkncmp.NumTknsInRegion(message[2][:2], message[1][:2], "A")))
+		var num_tokens2 float64 = math.Min(float64(tkncmp.NumTknsInRegion(message[2][:2], message[3][:2], "A")), float64(tkncmp.NumTknsInRegion(message[3][:2], message[2][:2], "A")))
+		var num_tokens3 float64 = math.Min(float64(tkncmp.NumTknsInRegion(message[1][:2], message[3][:2], "A")), float64(tkncmp.NumTknsInRegion(message[3][:2], message[1][:2], "A")))
+
 		var ratios []float64
 
 		for j := range opponents {
-			total_potentials1 += len(opponents[j].UnfirmedTwoTokensInRegion(message[1][:2], message[2][:2], "A"))
-			initials1 += len(opponents[j].UnfirmedOneTokensInRegion(message[1][:2], message[2][:2], "A"))
+			total_potentials1 += math.Max(float64(len(opponents[j].UnfirmedTwoTokensInRegion(message[1][:2], message[2][:2], "A"))), float64(len(opponents[j].UnfirmedTwoTokensInRegion(message[2][:2], message[1][:2], "A"))))
+			initials1 += math.Min(float64(len(opponents[j].UnfirmedOneTokensInRegion(message[1][:2], message[2][:2], "A"))), float64(len(opponents[j].UnfirmedOneTokensInRegion(message[2][:2], message[1][:2], "A"))))
+
 			opponent_potentials1[j]++
 			opponents_intials1[j]++
-			total_potentials2 += len(opponents[j].UnfirmedTwoTokensInRegion(message[2][:2], message[3][:2], "A"))
-			initials2 += len(opponents[j].UnfirmedOneTokensInRegion(message[2][:2], message[3][:2], "A"))
+
+			total_potentials2 += math.Max(float64(len(opponents[j].UnfirmedTwoTokensInRegion(message[2][:2], message[3][:2], "A"))), float64(len(opponents[j].UnfirmedTwoTokensInRegion(message[3][:2], message[2][:2], "A"))))
+			initials2 += math.Min(float64(len(opponents[j].UnfirmedOneTokensInRegion(message[2][:2], message[3][:2], "A"))), float64(len(opponents[j].UnfirmedOneTokensInRegion(message[3][:2], message[2][:2], "A"))))
+
 			opponent_potentials2[j]++
 			opponents_intials2[j]++
-			total_potentials3 += len(opponents[j].UnfirmedTwoTokensInRegion(message[1][:2], message[3][:2], "A"))
-			initials3 += len(opponents[j].UnfirmedOneTokensInRegion(message[1][:2], message[3][:2], "A"))
+
+			total_potentials3 += math.Max(float64(len(opponents[j].UnfirmedTwoTokensInRegion(message[1][:2], message[3][:2], "A"))), float64(len(opponents[j].UnfirmedTwoTokensInRegion(message[3][:2], message[1][:2], "A"))))
+			initials3 += math.Min(float64(len(opponents[j].UnfirmedOneTokensInRegion(message[1][:2], message[3][:2], "A"))), float64(len(opponents[j].UnfirmedOneTokensInRegion(message[3][:2], message[1][:2], "A"))))
+
 			opponent_potentials3[j]++
 			opponents_intials3[j]++
+
 		}
 
-		ratios1 = float64(initials1) / float64(initials1+total_potentials1)
-		ratios2 = float64(initials2) / float64(initials2+total_potentials2)
-		ratios3 = float64(initials3) / float64(initials3+total_potentials3)
+		ratios1 = initials1 / (initials1 + total_potentials1)
+		ratios2 = initials2 / (initials2 + total_potentials2)
+		ratios3 = initials3 / (initials3 + total_potentials3)
+
 		fmt.Println("ratios1")
 		fmt.Println(ratios1)
+
 		fmt.Println("ratios2")
 		fmt.Println(ratios2)
+
 		fmt.Println("ratios3")
 		fmt.Println(ratios3)
+
 		ratios = append(ratios, ratios1)
 		ratios = append(ratios, ratios2)
 		ratios = append(ratios, ratios3)
+
 		min := ratios[0]
 		var min_index int = 0
-		for i := 0; i < len(ratios); i++ {
+		for i := 1; i < len(ratios); i++ {
 			if ratios[i] <= min {
 				min = ratios[i]
 				min_index = i
@@ -356,30 +375,41 @@ func chooseDice(args string) string {
 			min_num := num_tokens1
 			die1 = 1
 			die2 = 2
+
 			if num_tokens2 < min_num {
+
 				for j := range opponents {
 					opponents_ratios[j] = float64(opponents_intials2[j]) / float64(opponent_potentials2[j]+opponents_intials2[j])
 				}
+
 				die1 = 2
 				die2 = 3
 				min_num = num_tokens2
 			}
+
 			if num_tokens3 < min_num {
 				for j := range opponents {
 					opponents_ratios[j] = float64(opponents_intials3[j]) / float64(opponent_potentials3[j]+opponents_intials3[j])
 				}
 				die1 = 1
 				die2 = 3
+
 				min_num = num_tokens3
+
 			}
+
 		} else if ratios1 == ratios2 && ratios2 < ratios3 {
+
 			min_num := num_tokens1
 			die1 = 1
 			die2 = 2
+
 			if num_tokens2 < min_num {
+
 				for j := range opponents {
 					opponents_ratios[j] = float64(opponents_intials2[j]) / float64(opponent_potentials2[j]+opponents_intials2[j])
 				}
+
 				die1 = 2
 				die2 = 3
 				min_num = num_tokens2
@@ -388,14 +418,19 @@ func chooseDice(args string) string {
 					opponents_ratios[j] = float64(opponents_intials1[j]) / float64(opponent_potentials1[j]+opponents_intials1[j])
 				}
 			}
+
 		} else if ratios2 == ratios3 && ratios2 < ratios1 {
+
 			min_num := num_tokens2
 			die1 = 2
 			die2 = 3
+
 			if num_tokens3 < min_num {
+
 				for j := range opponents {
 					opponents_ratios[j] = float64(opponents_intials3[j]) / float64(opponent_potentials3[j]+opponents_intials3[j])
 				}
+
 				die1 = 1
 				die2 = 3
 				min_num = num_tokens3
@@ -404,14 +439,19 @@ func chooseDice(args string) string {
 					opponents_ratios[j] = float64(opponents_intials2[j]) / float64(opponent_potentials2[j]+opponents_intials2[j])
 				}
 			}
+
 		} else if ratios1 == ratios3 && ratios1 < ratios2 {
+
 			min_num := num_tokens1
 			die1 = 1
 			die2 = 2
+
 			if num_tokens3 < min_num {
+
 				for j := range opponents {
 					opponents_ratios[j] = float64(opponents_intials3[j]) / float64(opponent_potentials3[j]+opponents_intials3[j])
 				}
+
 				die1 = 1
 				die2 = 3
 				min_num = num_tokens3
@@ -420,6 +460,7 @@ func chooseDice(args string) string {
 					opponents_ratios[j] = float64(opponents_intials1[j]) / float64(opponent_potentials1[j]+opponents_intials1[j])
 				}
 			}
+
 		} else {
 			if min_index == 0 {
 				die1 = 1
@@ -441,11 +482,14 @@ func chooseDice(args string) string {
 				}
 			}
 		}
+
 		var min_ratio = math.MaxFloat64
 		var min_ratio_index string
 		for j := range opponents {
+
 			fmt.Println("opponents_ratios")
 			fmt.Printf("%f\n", opponents_ratios[j])
+
 			if opponents_ratios[j] < min_ratio {
 				min_ratio = opponents_ratios[j]
 				min_ratio_index = opponents[j].No
@@ -454,11 +498,13 @@ func chooseDice(args string) string {
 		fmt.Println("min_ratio_index")
 		fmt.Println(min_ratio_index)
 		//plr = min_ratio_index
+
 		fmt.Println("die1")
 		fmt.Println(die1)
 		fmt.Println("die2")
 		fmt.Println(die2)
 		terrain = terrainParser(string(rolledDice[die1][2]), string(rolledDice[die2][2]))
+
 		if min_ratio_index == "" {
 			min_ratio_index = strconv.Itoa(randInt(1, len(opponents)+1))
 			for min_ratio_index == p.No {
