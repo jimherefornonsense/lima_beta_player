@@ -125,11 +125,6 @@ func (plr *Player) TokensInRegionByStatus(start string, end string, terrain stri
 	return tokens
 }
 
-// Checks tokens in a block of status -1 and 2
-func (plr *Player) UnfirmedTokensInRegion(start string, end string, terrain string) []string {
-	return append(plr.TokensInRegionByStatus(start, end, terrain, -1), plr.TokensInRegionByStatus(start, end, terrain, 2)...)
-}
-
 // Checks tokens in a block of status -1
 func (plr *Player) UnfirmedOneTokensInRegion(start string, end string, terrain string) []string {
 	return append(plr.TokensInRegionByStatus(start, end, terrain, -1))

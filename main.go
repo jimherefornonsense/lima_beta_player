@@ -2,15 +2,16 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"io"
+	"lima_beta_player/computer/tkncmp"
+	"lima_beta_player/player"
 	"math"
 	"math/rand"
 	"os"
 	"strconv"
 	"strings"
-	"lima_beta_player/computer/tkncmp"
-	"lima_beta_player/player"
 )
 
 // Game struct
@@ -133,43 +134,41 @@ func playerTurn(args string) string {
 		for _, opponent := range opponents {
 			opponent.DisplayTable()
 		}
-		
 
 		var final_guesses_first int = 0
 		var total_guesses int = 0
 		for i := range p.Table {
-			if p.Table[i].Beach!=-1 &&  p.Table[i].Beach!=3 {
-				final_guesses_first++;
-			 } 
-			total_guesses++;
-		}
-		fmt.Println("final_guesses")
-		fmt.Println(final_guesses_first)
-		
-		for i := range p.Table {
-			if p.Table[i].Forest!=-1 && p.Table[i].Forest!=3  {
-				final_guesses_first++;
-			} 
-			total_guesses++;
-		}
-		fmt.Println("final_guesses")
-		fmt.Println(final_guesses_first)
-		for i := range p.Table {
-			if p.Table[i].Mountain!=-1 && p.Table[i].Mountain!=3 {
-				final_guesses_first++;
+			if p.Table[i].Beach != -1 && p.Table[i].Beach != 2 {
+				final_guesses_first++
 			}
-			total_guesses++;
+			total_guesses++
+		}
+		fmt.Println("final_guesses")
+		fmt.Println(final_guesses_first)
+
+		for i := range p.Table {
+			if p.Table[i].Forest != -1 && p.Table[i].Forest != 2 {
+				final_guesses_first++
+			}
+			total_guesses++
+		}
+		fmt.Println("final_guesses")
+		fmt.Println(final_guesses_first)
+		for i := range p.Table {
+			if p.Table[i].Mountain != -1 && p.Table[i].Mountain != 2 {
+				final_guesses_first++
+			}
+			total_guesses++
 		}
 		fmt.Println("final_guesses")
 		fmt.Println(final_guesses_first)
 		fmt.Println("total")
 		fmt.Println(total_guesses)
 		fmt.Println("remaining")
-		fmt.Println(total_guesses-final_guesses_first)
-		if total_guesses-final_guesses_first==2 {
-			return guessTokens();
-		} 
-
+		fmt.Println(total_guesses - final_guesses_first)
+		if total_guesses-final_guesses_first == 2 {
+			return guessTokens()
+		}
 
 	} else {
 		var response string
@@ -281,17 +280,17 @@ func chooseDice(args string) string {
 	var n, die1, die2 int
 	var terrain string
 	if g.mode == 2 {
-		var plr int=0
-	    message := strings.Split(args[3:], ",")
+		var plr int = 0
+		message := strings.Split(args[3:], ",")
 		var regions []int
 		for j := 1; j < len(message); j++ {
-			regions = append(regions,player.TableIndexMap[message[j][:2]]) 
+			regions = append(regions, player.TableIndexMap[message[j][:2]])
 		}
 		fmt.Println("regions")
 		for j := 0; j < len(regions); j++ {
-         fmt.Println(regions[j])
+			fmt.Println(regions[j])
 		}
-		
+
 		var total_potentials1 int = 0
 		var total_potentials2 int = 0
 		var total_potentials3 int = 0
@@ -302,180 +301,178 @@ func chooseDice(args string) string {
 		opponents_intials2 := make([]int, len(opponents))
 		opponents_intials3 := make([]int, len(opponents))
 		opponents_ratios := make([]float64, len(opponents))
-                 
-					
+
 		var initials1 int = 0
 		var initials2 int = 0
 		var initials3 int = 0
 		var ratios1 float64 = 0
 		var ratios2 float64 = 0
 		var ratios3 float64 = 0
-		var num_tokens1 int = tkncmp.NumTknsInRegion(message[1][:2],message[2][:2],"A")
-		var num_tokens2 int = tkncmp.NumTknsInRegion(message[2][:2],message[3][:2],"A")
-		var num_tokens3 int = tkncmp.NumTknsInRegion(message[1][:2],message[3][:2],"A")
+		var num_tokens1 int = tkncmp.NumTknsInRegion(message[1][:2], message[2][:2], "A")
+		var num_tokens2 int = tkncmp.NumTknsInRegion(message[2][:2], message[3][:2], "A")
+		var num_tokens3 int = tkncmp.NumTknsInRegion(message[1][:2], message[3][:2], "A")
 		var ratios []float64
-					
+
 		for j := range opponents {
-			total_potentials1+= len(opponents[j].UnfirmedTwoTokensInRegion(message[1][:2],message[2][:2],"A"))
-			initials1+= len(opponents[j].UnfirmedOneTokensInRegion(message[1][:2],message[2][:2],"A"))
-			opponent_potentials1[j]++;
-			opponents_intials1[j]++;
-			total_potentials2+= len(opponents[j].UnfirmedTwoTokensInRegion(message[2][:2],message[3][:2],"A"))
-			initials2+= len(opponents[j].UnfirmedOneTokensInRegion(message[2][:2],message[3][:2],"A"))
-			opponent_potentials2[j]++;
-			opponents_intials2[j]++;
-			total_potentials3+= len(opponents[j].UnfirmedTwoTokensInRegion(message[1][:2],message[3][:2],"A"))
-			initials3+= len(opponents[j].UnfirmedOneTokensInRegion(message[1][:2],message[3][:2],"A"))
-			opponent_potentials3[j]++;
-			opponents_intials3[j]++;
+			total_potentials1 += len(opponents[j].UnfirmedTwoTokensInRegion(message[1][:2], message[2][:2], "A"))
+			initials1 += len(opponents[j].UnfirmedOneTokensInRegion(message[1][:2], message[2][:2], "A"))
+			opponent_potentials1[j]++
+			opponents_intials1[j]++
+			total_potentials2 += len(opponents[j].UnfirmedTwoTokensInRegion(message[2][:2], message[3][:2], "A"))
+			initials2 += len(opponents[j].UnfirmedOneTokensInRegion(message[2][:2], message[3][:2], "A"))
+			opponent_potentials2[j]++
+			opponents_intials2[j]++
+			total_potentials3 += len(opponents[j].UnfirmedTwoTokensInRegion(message[1][:2], message[3][:2], "A"))
+			initials3 += len(opponents[j].UnfirmedOneTokensInRegion(message[1][:2], message[3][:2], "A"))
+			opponent_potentials3[j]++
+			opponents_intials3[j]++
 		}
 
-			
-		ratios1 = float64(initials1)/float64(initials1+total_potentials1)
-		ratios2 = float64(initials2)/float64(initials2+total_potentials2)
-		ratios3 = float64(initials3)/float64(initials3+total_potentials3)
+		ratios1 = float64(initials1) / float64(initials1+total_potentials1)
+		ratios2 = float64(initials2) / float64(initials2+total_potentials2)
+		ratios3 = float64(initials3) / float64(initials3+total_potentials3)
 		fmt.Println("ratios1")
 		fmt.Println(ratios1)
 		fmt.Println("ratios2")
 		fmt.Println(ratios2)
 		fmt.Println("ratios3")
 		fmt.Println(ratios3)
-   		ratios = append(ratios,ratios1)
-   		ratios = append(ratios,ratios2)
-   		ratios = append(ratios,ratios3)
-   		min := ratios[0]
-   		var min_index int=0  
-   		for i :=0; i < len(ratios); i++ {
-		   if (ratios[i] <= min) {
-			   min = ratios[i]
-			   min_index = i
-		   }
-   		}
-		
-		if ratios1 == ratios2 && ratios2 == ratios3{
-			for j := range opponents{
-				opponents_ratios[j] = float64(opponents_intials1[j])/float64(opponent_potentials1[j]+opponents_intials1[j])
+		ratios = append(ratios, ratios1)
+		ratios = append(ratios, ratios2)
+		ratios = append(ratios, ratios3)
+		min := ratios[0]
+		var min_index int = 0
+		for i := 0; i < len(ratios); i++ {
+			if ratios[i] <= min {
+				min = ratios[i]
+				min_index = i
 			}
-			min_num := num_tokens1
-   			die1 = 1
-   			die2 = 2
-  			if num_tokens2 < min_num {
-				for j := range opponents{
-					opponents_ratios[j] = float64(opponents_intials2[j])/float64(opponent_potentials2[j]+opponents_intials2[j])
-				}
-				die1 = 2
-				die2 = 3
-				min_num = num_tokens2
-  			}
-  			if num_tokens3 < min_num {
-				for j := range opponents{
-					opponents_ratios[j] = float64(opponents_intials3[j])/float64(opponent_potentials3[j]+opponents_intials3[j])
-				}
-				die1 = 1
-				die2 = 3
-				min_num = num_tokens3
-  			}
-		} else if ratios1 == ratios2 && ratios2 < ratios3{
-			min_num := num_tokens1
-   			die1 = 1
-   			die2 = 2
-  			if num_tokens2 < min_num{
-				for j := range opponents{
-					opponents_ratios[j] = float64(opponents_intials2[j])/float64(opponent_potentials2[j]+opponents_intials2[j])
-				}
-				die1 = 2
-				die2 = 3
-				min_num = num_tokens2
-    		} else {
-				for j := range opponents{
-					opponents_ratios[j] = float64(opponents_intials1[j])/float64(opponent_potentials1[j]+opponents_intials1[j])
-				}
-  			}
-		}else if ratios2 == ratios3 && ratios2 < ratios1{
-			min_num := num_tokens2
-   			die1 = 2
-   			die2 = 3
-  			if num_tokens3 < min_num{
-				for j := range opponents{
-					opponents_ratios[j] = float64(opponents_intials3[j])/float64(opponent_potentials3[j]+opponents_intials3[j])
-				}
-				die1 = 1
-				die2 = 3
-				min_num = num_tokens3
-  			} else {
-				for j := range opponents{
-					opponents_ratios[j] = float64(opponents_intials2[j])/float64(opponent_potentials2[j]+opponents_intials2[j])
-				}
-  			}
-		}else if ratios1 == ratios3 && ratios1 < ratios2{
+		}
+
+		if ratios1 == ratios2 && ratios2 == ratios3 {
+			for j := range opponents {
+				opponents_ratios[j] = float64(opponents_intials1[j]) / float64(opponent_potentials1[j]+opponents_intials1[j])
+			}
 			min_num := num_tokens1
 			die1 = 1
 			die2 = 2
-   			if num_tokens3 < min_num{
-	 			for j := range opponents{
-		 			opponents_ratios[j] = float64(opponents_intials3[j])/float64(opponent_potentials3[j]+opponents_intials3[j])
-	 			}
-	 			die1 = 1
-	 			die2 = 3
-	 			min_num = num_tokens3
-   			} else{
-				for j := range opponents{
-					opponents_ratios[j] = float64(opponents_intials1[j])/float64(opponent_potentials1[j]+opponents_intials1[j])
+			if num_tokens2 < min_num {
+				for j := range opponents {
+					opponents_ratios[j] = float64(opponents_intials2[j]) / float64(opponent_potentials2[j]+opponents_intials2[j])
 				}
-   			}
-		} else{
-			if min_index==0 {
-				die1=1
-				die2=2
-				for j := range opponents{
-					opponents_ratios[j] = float64(opponents_intials1[j])/float64(opponent_potentials1[j]+opponents_intials1[j])
+				die1 = 2
+				die2 = 3
+				min_num = num_tokens2
+			}
+			if num_tokens3 < min_num {
+				for j := range opponents {
+					opponents_ratios[j] = float64(opponents_intials3[j]) / float64(opponent_potentials3[j]+opponents_intials3[j])
 				}
-			} else if min_index==1 {
-				die1=2
-				die2=3
-				for j := range opponents{
-					opponents_ratios[j] = float64(opponents_intials2[j])/float64(opponent_potentials2[j]+opponents_intials2[j])
+				die1 = 1
+				die2 = 3
+				min_num = num_tokens3
+			}
+		} else if ratios1 == ratios2 && ratios2 < ratios3 {
+			min_num := num_tokens1
+			die1 = 1
+			die2 = 2
+			if num_tokens2 < min_num {
+				for j := range opponents {
+					opponents_ratios[j] = float64(opponents_intials2[j]) / float64(opponent_potentials2[j]+opponents_intials2[j])
 				}
-			} else if min_index==2 {
-				die1=1
-				die2=3
-				for j := range opponents{
-					opponents_ratios[j] = float64(opponents_intials3[j])/float64(opponent_potentials3[j]+opponents_intials3[j])
+				die1 = 2
+				die2 = 3
+				min_num = num_tokens2
+			} else {
+				for j := range opponents {
+					opponents_ratios[j] = float64(opponents_intials1[j]) / float64(opponent_potentials1[j]+opponents_intials1[j])
+				}
+			}
+		} else if ratios2 == ratios3 && ratios2 < ratios1 {
+			min_num := num_tokens2
+			die1 = 2
+			die2 = 3
+			if num_tokens3 < min_num {
+				for j := range opponents {
+					opponents_ratios[j] = float64(opponents_intials3[j]) / float64(opponent_potentials3[j]+opponents_intials3[j])
+				}
+				die1 = 1
+				die2 = 3
+				min_num = num_tokens3
+			} else {
+				for j := range opponents {
+					opponents_ratios[j] = float64(opponents_intials2[j]) / float64(opponent_potentials2[j]+opponents_intials2[j])
+				}
+			}
+		} else if ratios1 == ratios3 && ratios1 < ratios2 {
+			min_num := num_tokens1
+			die1 = 1
+			die2 = 2
+			if num_tokens3 < min_num {
+				for j := range opponents {
+					opponents_ratios[j] = float64(opponents_intials3[j]) / float64(opponent_potentials3[j]+opponents_intials3[j])
+				}
+				die1 = 1
+				die2 = 3
+				min_num = num_tokens3
+			} else {
+				for j := range opponents {
+					opponents_ratios[j] = float64(opponents_intials1[j]) / float64(opponent_potentials1[j]+opponents_intials1[j])
+				}
+			}
+		} else {
+			if min_index == 0 {
+				die1 = 1
+				die2 = 2
+				for j := range opponents {
+					opponents_ratios[j] = float64(opponents_intials1[j]) / float64(opponent_potentials1[j]+opponents_intials1[j])
+				}
+			} else if min_index == 1 {
+				die1 = 2
+				die2 = 3
+				for j := range opponents {
+					opponents_ratios[j] = float64(opponents_intials2[j]) / float64(opponent_potentials2[j]+opponents_intials2[j])
+				}
+			} else if min_index == 2 {
+				die1 = 1
+				die2 = 3
+				for j := range opponents {
+					opponents_ratios[j] = float64(opponents_intials3[j]) / float64(opponent_potentials3[j]+opponents_intials3[j])
 				}
 			}
 		}
-   	var min_ratio=math.MaxFloat64
-	var min_ratio_index string
-	for j := range opponents{	
-		fmt.Println("opponents_ratios")
-		fmt.Printf("%f\n", opponents_ratios[j])
-		if opponents_ratios[j]<min_ratio {
-			min_ratio=opponents_ratios[j]
-			min_ratio_index=opponents[j].No
+		var min_ratio = math.MaxFloat64
+		var min_ratio_index string
+		for j := range opponents {
+			fmt.Println("opponents_ratios")
+			fmt.Printf("%f\n", opponents_ratios[j])
+			if opponents_ratios[j] < min_ratio {
+				min_ratio = opponents_ratios[j]
+				min_ratio_index = opponents[j].No
+			}
 		}
-	}
-   fmt.Println("min_ratio_index")
-   fmt.Println(min_ratio_index)
-	//plr = min_ratio_index			
-	fmt.Println("die1")
-	fmt.Println(die1)
-	fmt.Println("die2")
-	fmt.Println(die2)
-	terrain = terrainParser(string(rolledDice[die1][2]), string(rolledDice[die2][2]))
-	if min_ratio_index=="" {
+		fmt.Println("min_ratio_index")
+		fmt.Println(min_ratio_index)
+		//plr = min_ratio_index
+		fmt.Println("die1")
+		fmt.Println(die1)
+		fmt.Println("die2")
+		fmt.Println(die2)
+		terrain = terrainParser(string(rolledDice[die1][2]), string(rolledDice[die2][2]))
+		if min_ratio_index == "" {
 			min_ratio_index = strconv.Itoa(randInt(1, len(opponents)+1))
-		for min_ratio_index == p.No {
-			min_ratio_index = strconv.Itoa(randInt(1, len(opponents)+1))
+			for min_ratio_index == p.No {
+				min_ratio_index = strconv.Itoa(randInt(1, len(opponents)+1))
+			}
 		}
-	}
-	var temp string = "05:" + rolledDice[die1] + "," + rolledDice[die2] + "," + terrain + ",P" + min_ratio_index
-	fmt.Println(die1)
-	fmt.Println(die2)
-	fmt.Println(p.No)
-	fmt.Println(strconv.Itoa(plr))
-	fmt.Println(len(opponents))
-	fmt.Println("temp-" + temp)
-	return temp
+		var temp string = "05:" + rolledDice[die1] + "," + rolledDice[die2] + "," + terrain + ",P" + min_ratio_index
+		fmt.Println(die1)
+		fmt.Println(die2)
+		fmt.Println(p.No)
+		fmt.Println(strconv.Itoa(plr))
+		fmt.Println(len(opponents))
+		fmt.Println("temp-" + temp)
+		return temp
 	} else {
 		var plr string
 		fmt.Println("Choose first die by number")
@@ -556,51 +553,50 @@ func isValidToken(token string) bool {
 func guessTokens() string {
 	var first_token string
 	var second_token string
-
 	var tokens []string
+
 	if g.mode == 2 {
 		for i := range p.Table {
-			if p.Table[i].Beach==-1  {
-				tokens = append(tokens,strconv.Itoa(i+1)+"B")
-
-			} else if p.Table[i].Forest==-1  {
-				tokens = append(tokens,strconv.Itoa(i+1)+"F")
-			} else if p.Table[i].Mountain==-1   {
-				tokens = append(tokens,strconv.Itoa(i+1)+"M")
-		   }
-		}
-		
-		for i := range p.Table {
-			if p.Table[i].Beach==3  {
-				tokens = append(tokens,strconv.Itoa(i+1)+"B")
-			} else if p.Table[i].Forest==3  {
-				tokens = append(tokens,strconv.Itoa(i+1)+"F")
-			} else if p.Table[i].Mountain==3  {
-				tokens = append(tokens,strconv.Itoa(i+1)+"M")
+			if p.Table[i].Beach == -1 {
+				tokens = append(tokens, strconv.Itoa(i+1)+"B")
+			} else if p.Table[i].Forest == -1 {
+				tokens = append(tokens, strconv.Itoa(i+1)+"F")
+			} else if p.Table[i].Mountain == -1 {
+				tokens = append(tokens, strconv.Itoa(i+1)+"M")
 			}
-  
-		}
-	/*	
-	randomIndex := rand.Intn(len(tkncmp.TokenMap))
-		first_token = tkncmp.TokenMap[randomIndex]
-		_, found := Find(p.PlayerTerrains, first_token)
-		for found {
-			randomIndex := rand.Intn(len(tkncmp.TokenMap))
-			first_token = tkncmp.TokenMap[randomIndex]
-			_, found = Find(p.PlayerTerrains, first_token)
 		}
 
-		randomIndex2 := rand.Intn(len(tkncmp.TokenMap))
-		second_token = tkncmp.TokenMap[randomIndex2]
-		_, found2 := Find(p.PlayerTerrains, second_token)
-		for found2 || first_token == second_token {
-			randomIndex2 := rand.Intn(len(tkncmp.TokenMap))
-			second_token = tkncmp.TokenMap[randomIndex2]
-			_, found2 = Find(p.PlayerTerrains, second_token)
+		for i := range p.Table {
+			if p.Table[i].Beach == 2 {
+				tokens = append(tokens, strconv.Itoa(i+1)+"B")
+			} else if p.Table[i].Forest == 2 {
+				tokens = append(tokens, strconv.Itoa(i+1)+"F")
+			} else if p.Table[i].Mountain == 2 {
+				tokens = append(tokens, strconv.Itoa(i+1)+"M")
+			}
+
 		}
-	*/
+		/*
+			randomIndex := rand.Intn(len(tkncmp.TokenMap))
+				first_token = tkncmp.TokenMap[randomIndex]
+				_, found := Find(p.PlayerTerrains, first_token)
+				for found {
+					randomIndex := rand.Intn(len(tkncmp.TokenMap))
+					first_token = tkncmp.TokenMap[randomIndex]
+					_, found = Find(p.PlayerTerrains, first_token)
+				}
+
+				randomIndex2 := rand.Intn(len(tkncmp.TokenMap))
+				second_token = tkncmp.TokenMap[randomIndex2]
+				_, found2 := Find(p.PlayerTerrains, second_token)
+				for found2 || first_token == second_token {
+					randomIndex2 := rand.Intn(len(tkncmp.TokenMap))
+					second_token = tkncmp.TokenMap[randomIndex2]
+					_, found2 = Find(p.PlayerTerrains, second_token)
+				}
+		*/
 		fmt.Println("Submitting a guess:", tokens[0], tokens[1])
-		var temp string = "07:P" + p.No + "," + tokens[0]+ "," + tokens[1]
+		var temp string = "07:P" + p.No + "," + tokens[0] + "," + tokens[1]
 		return temp
 	} else {
 		fmt.Println("Choose first token: ")
@@ -677,41 +673,46 @@ func Find(slice []string, val string) (int, bool) {
 
 func main() {
 	var pNo, pipeName, toPN, fromPN string
-	var mode int
-
-	// Mode of human-controlled or computer-controlled
-	fmt.Println("Do you want player to be controlled by human or by computer? Choose 1 for human and 2 for computer")
-	fmt.Println("1.Human")
-	fmt.Println("2.Computer")
-	fmt.Scanf("%d", &mode)
-	for mode != 1 && mode != 2 {
-		fmt.Println("Invalid selection")
+	var mode int = 2
+	flag.StringVar(&pNo, "n", "2", "player number")
+	flag.StringVar(&pipeName, "pn", "all", "pipe name")
+	flag.Parse()
+	/*
+		// Mode of human-controlled or computer-controlled
 		fmt.Println("Do you want player to be controlled by human or by computer? Choose 1 for human and 2 for computer")
 		fmt.Println("1.Human")
 		fmt.Println("2.Computer")
 		fmt.Scanf("%d", &mode)
-	}
+		for mode != 1 && mode != 2 {
+			fmt.Println("Invalid selection")
+			fmt.Println("Do you want player to be controlled by human or by computer? Choose 1 for human and 2 for computer")
+			fmt.Println("1.Human")
+			fmt.Println("2.Computer")
+			fmt.Scanf("%d", &mode)
+		}
+	*/
 	g.mode = mode
-
 	// Set maximum round
 	if g.mode == 2 {
-	//	fmt.Println("Choose the maximum number of rounds you want")
-	//	fmt.Scanf("%d", &rounds)
-	//	for rounds < 1 {
-	//		fmt.Println("You should choose the minimum number of rounds to be 1")
-	//		fmt.Scanf("%d", &rounds)
-	//	}
+		//	fmt.Println("Choose the maximum number of rounds you want")
+		//	fmt.Scanf("%d", &rounds)
+		//	for rounds < 1 {
+		//		fmt.Println("You should choose the minimum number of rounds to be 1")
+		//		fmt.Scanf("%d", &rounds)
+		//	}
 		// for rounds > 5 {
 		// 	fmt.Println("You can choose the maximum number of rounds upto 5")
 		// 	fmt.Scanf("%d", &rounds)
 		// }
-	//	g.maximum_rounds = rounds
+		//	g.maximum_rounds = rounds
 		g.current_round = 0
 	}
 
 	// Set player number and directory prefixed Name
-	fmt.Println("Enter your Player Number and pipe Prefixed Name: (separated by space)")
-	fmt.Scanf("%s%s", &pNo, &pipeName)
+	/*
+		fmt.Println("Enter your Player Number and pipe Prefixed Name: (separated by space)")
+		fmt.Scanf("%s%s", &pNo, &pipeName)
+	*/
 	toPN = "/tmp/" + pipeName + "toP" + pNo
 	fromPN = "/tmp/" + pipeName + "fromP" + pNo
 	fmt.Println(toPN, fromPN)
