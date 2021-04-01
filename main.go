@@ -7,11 +7,11 @@ import (
 	"io"
 	"lima_beta_player/computer/tkncmp"
 	"lima_beta_player/player"
-	"math"
 	"math/rand"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Game struct
@@ -279,239 +279,23 @@ func chooseDice(args string) string {
 	rolledDice := strings.Split(args[3:], ",")
 	var n, die1, die2 int
 	var terrain string
+	// Temporary using random choosing, still implementing intelligent one
 	if g.mode == 2 {
-		var plr int = 0
-		message := strings.Split(args[3:], ",")
-		var regions []int
-		for j := 1; j < len(message); j++ {
-			regions = append(regions, player.TableIndexMap[message[j][:2]])
-		}
-		fmt.Println("regions")
-		for j := 0; j < len(regions); j++ {
-			fmt.Println(regions[j])
-		}
-		fmt.Println("regions")
-		for j := 0; j < len(regions); j++ {
-			fmt.Println(regions[j])
+		var plr int
+		rand.Seed(time.Now().UTC().UnixNano())
+		die1 = randInt(1, 3)
+		die2 = randInt(1, 3)
+		for die2 == die1 {
+			die2 = randInt(1, 3)
 		}
 
-		var total_potentials1 float64 = 0
-		var total_potentials2 float64 = 0
-		var total_potentials3 float64 = 0
-
-		opponent_potentials1 := make([]int, len(opponents))
-		opponent_potentials2 := make([]int, len(opponents))
-		opponent_potentials3 := make([]int, len(opponents))
-		opponents_intials1 := make([]int, len(opponents))
-		opponents_intials2 := make([]int, len(opponents))
-		opponents_intials3 := make([]int, len(opponents))
-		opponents_ratios := make([]float64, len(opponents))
-
-		var initials1 float64 = 0
-		var initials2 float64 = 0
-		var initials3 float64 = 0
-
-		var ratios1 float64 = 0
-		var ratios2 float64 = 0
-		var ratios3 float64 = 0
-
-		var num_tokens1 float64 = math.Min(float64(tkncmp.NumTknsInRegion(message[1][:2], message[2][:2], "A")), float64(tkncmp.NumTknsInRegion(message[2][:2], message[1][:2], "A")))
-		var num_tokens2 float64 = math.Min(float64(tkncmp.NumTknsInRegion(message[2][:2], message[3][:2], "A")), float64(tkncmp.NumTknsInRegion(message[3][:2], message[2][:2], "A")))
-		var num_tokens3 float64 = math.Min(float64(tkncmp.NumTknsInRegion(message[1][:2], message[3][:2], "A")), float64(tkncmp.NumTknsInRegion(message[3][:2], message[1][:2], "A")))
-
-		var ratios []float64
-
-		for j := range opponents {
-			total_potentials1 += math.Max(float64(len(opponents[j].UnfirmedTwoTokensInRegion(message[1][:2], message[2][:2], "A"))), float64(len(opponents[j].UnfirmedTwoTokensInRegion(message[2][:2], message[1][:2], "A"))))
-			initials1 += math.Min(float64(len(opponents[j].UnfirmedOneTokensInRegion(message[1][:2], message[2][:2], "A"))), float64(len(opponents[j].UnfirmedOneTokensInRegion(message[2][:2], message[1][:2], "A"))))
-
-			opponent_potentials1[j]++
-			opponents_intials1[j]++
-
-			total_potentials2 += math.Max(float64(len(opponents[j].UnfirmedTwoTokensInRegion(message[2][:2], message[3][:2], "A"))), float64(len(opponents[j].UnfirmedTwoTokensInRegion(message[3][:2], message[2][:2], "A"))))
-			initials2 += math.Min(float64(len(opponents[j].UnfirmedOneTokensInRegion(message[2][:2], message[3][:2], "A"))), float64(len(opponents[j].UnfirmedOneTokensInRegion(message[3][:2], message[2][:2], "A"))))
-
-			opponent_potentials2[j]++
-			opponents_intials2[j]++
-
-			total_potentials3 += math.Max(float64(len(opponents[j].UnfirmedTwoTokensInRegion(message[1][:2], message[3][:2], "A"))), float64(len(opponents[j].UnfirmedTwoTokensInRegion(message[3][:2], message[1][:2], "A"))))
-			initials3 += math.Min(float64(len(opponents[j].UnfirmedOneTokensInRegion(message[1][:2], message[3][:2], "A"))), float64(len(opponents[j].UnfirmedOneTokensInRegion(message[3][:2], message[1][:2], "A"))))
-
-			opponent_potentials3[j]++
-			opponents_intials3[j]++
-
-		}
-
-		ratios1 = initials1 / (initials1 + total_potentials1)
-		ratios2 = initials2 / (initials2 + total_potentials2)
-		ratios3 = initials3 / (initials3 + total_potentials3)
-
-		fmt.Println("ratios1")
-		fmt.Println(ratios1)
-
-		fmt.Println("ratios2")
-		fmt.Println(ratios2)
-
-		fmt.Println("ratios3")
-		fmt.Println(ratios3)
-
-		ratios = append(ratios, ratios1)
-		ratios = append(ratios, ratios2)
-		ratios = append(ratios, ratios3)
-
-		min := ratios[0]
-		var min_index int = 0
-		for i := 1; i < len(ratios); i++ {
-			if ratios[i] <= min {
-				min = ratios[i]
-				min_index = i
-			}
-		}
-
-		if ratios1 == ratios2 && ratios2 == ratios3 {
-			for j := range opponents {
-				opponents_ratios[j] = float64(opponents_intials1[j]) / float64(opponent_potentials1[j]+opponents_intials1[j])
-			}
-			min_num := num_tokens1
-			die1 = 1
-			die2 = 2
-
-			if num_tokens2 < min_num {
-
-				for j := range opponents {
-					opponents_ratios[j] = float64(opponents_intials2[j]) / float64(opponent_potentials2[j]+opponents_intials2[j])
-				}
-
-				die1 = 2
-				die2 = 3
-				min_num = num_tokens2
-			}
-
-			if num_tokens3 < min_num {
-				for j := range opponents {
-					opponents_ratios[j] = float64(opponents_intials3[j]) / float64(opponent_potentials3[j]+opponents_intials3[j])
-				}
-				die1 = 1
-				die2 = 3
-
-				min_num = num_tokens3
-
-			}
-
-		} else if ratios1 == ratios2 && ratios2 < ratios3 {
-
-			min_num := num_tokens1
-			die1 = 1
-			die2 = 2
-
-			if num_tokens2 < min_num {
-
-				for j := range opponents {
-					opponents_ratios[j] = float64(opponents_intials2[j]) / float64(opponent_potentials2[j]+opponents_intials2[j])
-				}
-
-				die1 = 2
-				die2 = 3
-				min_num = num_tokens2
-			} else {
-				for j := range opponents {
-					opponents_ratios[j] = float64(opponents_intials1[j]) / float64(opponent_potentials1[j]+opponents_intials1[j])
-				}
-			}
-
-		} else if ratios2 == ratios3 && ratios2 < ratios1 {
-
-			min_num := num_tokens2
-			die1 = 2
-			die2 = 3
-
-			if num_tokens3 < min_num {
-
-				for j := range opponents {
-					opponents_ratios[j] = float64(opponents_intials3[j]) / float64(opponent_potentials3[j]+opponents_intials3[j])
-				}
-
-				die1 = 1
-				die2 = 3
-				min_num = num_tokens3
-			} else {
-				for j := range opponents {
-					opponents_ratios[j] = float64(opponents_intials2[j]) / float64(opponent_potentials2[j]+opponents_intials2[j])
-				}
-			}
-
-		} else if ratios1 == ratios3 && ratios1 < ratios2 {
-
-			min_num := num_tokens1
-			die1 = 1
-			die2 = 2
-
-			if num_tokens3 < min_num {
-
-				for j := range opponents {
-					opponents_ratios[j] = float64(opponents_intials3[j]) / float64(opponent_potentials3[j]+opponents_intials3[j])
-				}
-
-				die1 = 1
-				die2 = 3
-				min_num = num_tokens3
-			} else {
-				for j := range opponents {
-					opponents_ratios[j] = float64(opponents_intials1[j]) / float64(opponent_potentials1[j]+opponents_intials1[j])
-				}
-			}
-
-		} else {
-			if min_index == 0 {
-				die1 = 1
-				die2 = 2
-				for j := range opponents {
-					opponents_ratios[j] = float64(opponents_intials1[j]) / float64(opponent_potentials1[j]+opponents_intials1[j])
-				}
-			} else if min_index == 1 {
-				die1 = 2
-				die2 = 3
-				for j := range opponents {
-					opponents_ratios[j] = float64(opponents_intials2[j]) / float64(opponent_potentials2[j]+opponents_intials2[j])
-				}
-			} else if min_index == 2 {
-				die1 = 1
-				die2 = 3
-				for j := range opponents {
-					opponents_ratios[j] = float64(opponents_intials3[j]) / float64(opponent_potentials3[j]+opponents_intials3[j])
-				}
-			}
-		}
-
-		var min_ratio = math.MaxFloat64
-		var min_ratio_index string
-		for j := range opponents {
-
-			fmt.Println("opponents_ratios")
-			fmt.Printf("%f\n", opponents_ratios[j])
-
-			if opponents_ratios[j] < min_ratio {
-				min_ratio = opponents_ratios[j]
-				min_ratio_index = opponents[j].No
-			}
-		}
-		fmt.Println("min_ratio_index")
-		fmt.Println(min_ratio_index)
-		//plr = min_ratio_index
-
-		fmt.Println("die1")
-		fmt.Println(die1)
-		fmt.Println("die2")
-		fmt.Println(die2)
 		terrain = terrainParser(string(rolledDice[die1][2]), string(rolledDice[die2][2]))
 
-		if min_ratio_index == "" {
-			min_ratio_index = strconv.Itoa(randInt(1, len(opponents)+1))
-			for min_ratio_index == p.No {
-				min_ratio_index = strconv.Itoa(randInt(1, len(opponents)+1))
-			}
+		plr = randInt(1, len(opponents)+1)
+		for strconv.Itoa(plr) == p.No {
+			plr = randInt(1, len(opponents)+1)
 		}
-		var temp string = "05:" + rolledDice[die1] + "," + rolledDice[die2] + "," + terrain + ",P" + min_ratio_index
+		var temp string = "05:" + rolledDice[die1] + "," + rolledDice[die2] + "," + terrain + ",P" + strconv.Itoa(plr)
 		fmt.Println(die1)
 		fmt.Println(die2)
 		fmt.Println(p.No)
@@ -519,6 +303,247 @@ func chooseDice(args string) string {
 		fmt.Println(len(opponents))
 		fmt.Println("temp-" + temp)
 		return temp
+		/*
+			var plr int = 0
+			message := strings.Split(args[3:], ",")
+			var regions []int
+			for j := 1; j < len(message); j++ {
+				regions = append(regions, player.TableIndexMap[message[j][:2]])
+			}
+			fmt.Println("regions")
+			for j := 0; j < len(regions); j++ {
+				fmt.Println(regions[j])
+			}
+			fmt.Println("regions")
+			for j := 0; j < len(regions); j++ {
+				fmt.Println(regions[j])
+			}
+
+			var total_potentials1 float64 = 0
+			var total_potentials2 float64 = 0
+			var total_potentials3 float64 = 0
+
+			opponent_potentials1 := make([]int, len(opponents))
+			opponent_potentials2 := make([]int, len(opponents))
+			opponent_potentials3 := make([]int, len(opponents))
+			opponents_intials1 := make([]int, len(opponents))
+			opponents_intials2 := make([]int, len(opponents))
+			opponents_intials3 := make([]int, len(opponents))
+			opponents_ratios := make([]float64, len(opponents))
+
+			var initials1 float64 = 0
+			var initials2 float64 = 0
+			var initials3 float64 = 0
+
+			var ratios1 float64 = 0
+			var ratios2 float64 = 0
+			var ratios3 float64 = 0
+
+			var num_tokens1 float64 = math.Min(float64(tkncmp.NumTknsInRegion(message[1][:2], message[2][:2], "A")), float64(tkncmp.NumTknsInRegion(message[2][:2], message[1][:2], "A")))
+			var num_tokens2 float64 = math.Min(float64(tkncmp.NumTknsInRegion(message[2][:2], message[3][:2], "A")), float64(tkncmp.NumTknsInRegion(message[3][:2], message[2][:2], "A")))
+			var num_tokens3 float64 = math.Min(float64(tkncmp.NumTknsInRegion(message[1][:2], message[3][:2], "A")), float64(tkncmp.NumTknsInRegion(message[3][:2], message[1][:2], "A")))
+
+			var ratios []float64
+
+			for j := range opponents {
+				total_potentials1 += math.Max(float64(len(opponents[j].UnfirmedTwoTokensInRegion(message[1][:2], message[2][:2], "A"))), float64(len(opponents[j].UnfirmedTwoTokensInRegion(message[2][:2], message[1][:2], "A"))))
+				initials1 += math.Min(float64(len(opponents[j].UnfirmedOneTokensInRegion(message[1][:2], message[2][:2], "A"))), float64(len(opponents[j].UnfirmedOneTokensInRegion(message[2][:2], message[1][:2], "A"))))
+
+				opponent_potentials1[j]++
+				opponents_intials1[j]++
+
+				total_potentials2 += math.Max(float64(len(opponents[j].UnfirmedTwoTokensInRegion(message[2][:2], message[3][:2], "A"))), float64(len(opponents[j].UnfirmedTwoTokensInRegion(message[3][:2], message[2][:2], "A"))))
+				initials2 += math.Min(float64(len(opponents[j].UnfirmedOneTokensInRegion(message[2][:2], message[3][:2], "A"))), float64(len(opponents[j].UnfirmedOneTokensInRegion(message[3][:2], message[2][:2], "A"))))
+
+				opponent_potentials2[j]++
+				opponents_intials2[j]++
+
+				total_potentials3 += math.Max(float64(len(opponents[j].UnfirmedTwoTokensInRegion(message[1][:2], message[3][:2], "A"))), float64(len(opponents[j].UnfirmedTwoTokensInRegion(message[3][:2], message[1][:2], "A"))))
+				initials3 += math.Min(float64(len(opponents[j].UnfirmedOneTokensInRegion(message[1][:2], message[3][:2], "A"))), float64(len(opponents[j].UnfirmedOneTokensInRegion(message[3][:2], message[1][:2], "A"))))
+
+				opponent_potentials3[j]++
+				opponents_intials3[j]++
+
+			}
+
+			ratios1 = initials1 / (initials1 + total_potentials1)
+			ratios2 = initials2 / (initials2 + total_potentials2)
+			ratios3 = initials3 / (initials3 + total_potentials3)
+
+			fmt.Println("ratios1")
+			fmt.Println(ratios1)
+
+			fmt.Println("ratios2")
+			fmt.Println(ratios2)
+
+			fmt.Println("ratios3")
+			fmt.Println(ratios3)
+
+			ratios = append(ratios, ratios1)
+			ratios = append(ratios, ratios2)
+			ratios = append(ratios, ratios3)
+
+			min := ratios[0]
+			var min_index int = 0
+			for i := 1; i < len(ratios); i++ {
+				if ratios[i] <= min {
+					min = ratios[i]
+					min_index = i
+				}
+			}
+
+			if ratios1 == ratios2 && ratios2 == ratios3 {
+				for j := range opponents {
+					opponents_ratios[j] = float64(opponents_intials1[j]) / float64(opponent_potentials1[j]+opponents_intials1[j])
+				}
+				min_num := num_tokens1
+				die1 = 1
+				die2 = 2
+
+				if num_tokens2 < min_num {
+
+					for j := range opponents {
+						opponents_ratios[j] = float64(opponents_intials2[j]) / float64(opponent_potentials2[j]+opponents_intials2[j])
+					}
+
+					die1 = 2
+					die2 = 3
+					min_num = num_tokens2
+				}
+
+				if num_tokens3 < min_num {
+					for j := range opponents {
+						opponents_ratios[j] = float64(opponents_intials3[j]) / float64(opponent_potentials3[j]+opponents_intials3[j])
+					}
+					die1 = 1
+					die2 = 3
+
+					min_num = num_tokens3
+
+				}
+
+			} else if ratios1 == ratios2 && ratios2 < ratios3 {
+
+				min_num := num_tokens1
+				die1 = 1
+				die2 = 2
+
+				if num_tokens2 < min_num {
+
+					for j := range opponents {
+						opponents_ratios[j] = float64(opponents_intials2[j]) / float64(opponent_potentials2[j]+opponents_intials2[j])
+					}
+
+					die1 = 2
+					die2 = 3
+					min_num = num_tokens2
+				} else {
+					for j := range opponents {
+						opponents_ratios[j] = float64(opponents_intials1[j]) / float64(opponent_potentials1[j]+opponents_intials1[j])
+					}
+				}
+
+			} else if ratios2 == ratios3 && ratios2 < ratios1 {
+
+				min_num := num_tokens2
+				die1 = 2
+				die2 = 3
+
+				if num_tokens3 < min_num {
+
+					for j := range opponents {
+						opponents_ratios[j] = float64(opponents_intials3[j]) / float64(opponent_potentials3[j]+opponents_intials3[j])
+					}
+
+					die1 = 1
+					die2 = 3
+					min_num = num_tokens3
+				} else {
+					for j := range opponents {
+						opponents_ratios[j] = float64(opponents_intials2[j]) / float64(opponent_potentials2[j]+opponents_intials2[j])
+					}
+				}
+
+			} else if ratios1 == ratios3 && ratios1 < ratios2 {
+
+				min_num := num_tokens1
+				die1 = 1
+				die2 = 2
+
+				if num_tokens3 < min_num {
+
+					for j := range opponents {
+						opponents_ratios[j] = float64(opponents_intials3[j]) / float64(opponent_potentials3[j]+opponents_intials3[j])
+					}
+
+					die1 = 1
+					die2 = 3
+					min_num = num_tokens3
+				} else {
+					for j := range opponents {
+						opponents_ratios[j] = float64(opponents_intials1[j]) / float64(opponent_potentials1[j]+opponents_intials1[j])
+					}
+				}
+
+			} else {
+				if min_index == 0 {
+					die1 = 1
+					die2 = 2
+					for j := range opponents {
+						opponents_ratios[j] = float64(opponents_intials1[j]) / float64(opponent_potentials1[j]+opponents_intials1[j])
+					}
+				} else if min_index == 1 {
+					die1 = 2
+					die2 = 3
+					for j := range opponents {
+						opponents_ratios[j] = float64(opponents_intials2[j]) / float64(opponent_potentials2[j]+opponents_intials2[j])
+					}
+				} else if min_index == 2 {
+					die1 = 1
+					die2 = 3
+					for j := range opponents {
+						opponents_ratios[j] = float64(opponents_intials3[j]) / float64(opponent_potentials3[j]+opponents_intials3[j])
+					}
+				}
+			}
+
+			var min_ratio = math.MaxFloat64
+			var min_ratio_index string
+			for j := range opponents {
+
+				fmt.Println("opponents_ratios")
+				fmt.Printf("%f\n", opponents_ratios[j])
+
+				if opponents_ratios[j] < min_ratio {
+					min_ratio = opponents_ratios[j]
+					min_ratio_index = opponents[j].No
+				}
+			}
+			fmt.Println("min_ratio_index")
+			fmt.Println(min_ratio_index)
+			//plr = min_ratio_index
+
+			fmt.Println("die1")
+			fmt.Println(die1)
+			fmt.Println("die2")
+			fmt.Println(die2)
+			terrain = terrainParser(string(rolledDice[die1][2]), string(rolledDice[die2][2]))
+
+			if min_ratio_index == "" {
+				min_ratio_index = strconv.Itoa(randInt(1, len(opponents)+1))
+				for min_ratio_index == p.No {
+					min_ratio_index = strconv.Itoa(randInt(1, len(opponents)+1))
+				}
+			}
+			var temp string = "05:" + rolledDice[die1] + "," + rolledDice[die2] + "," + terrain + ",P" + min_ratio_index
+			fmt.Println(die1)
+			fmt.Println(die2)
+			fmt.Println(p.No)
+			fmt.Println(strconv.Itoa(plr))
+			fmt.Println(len(opponents))
+			fmt.Println("temp-" + temp)
+			return temp
+		*/
 	} else {
 		var plr string
 		fmt.Println("Choose first die by number")
