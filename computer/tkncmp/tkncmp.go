@@ -39,7 +39,7 @@ func TokenInfoSwapCompute(token string, opponentNo string, plr *player.Player, o
 }
 
 // Number of tokens in a block
-func numTknsInRegion(start string, end string, terrain string) int {
+func NumTknsInRegion(start string, end string, terrain string) int {
 	var idxFrom, idxEnd, nToken int
 
 	idxFrom = directionIndexMap[start]

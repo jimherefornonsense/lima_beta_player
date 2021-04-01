@@ -22,7 +22,7 @@ type Player struct {
 	PotentialObtainedTknsList map[int][][]string
 }
 
-var tableIndexMap = map[string]int{"NN": 0, "NE": 1, "EE": 2, "SE": 3, "SS": 4, "SW": 5, "WW": 6, "NW": 7}
+var TableIndexMap = map[string]int{"NN": 0, "NE": 1, "EE": 2, "SE": 3, "SS": 4, "SW": 5, "WW": 6, "NW": 7}
 
 func NewPlayer(playerNo string) Player {
 	plr := Player{No: playerNo}
@@ -89,8 +89,8 @@ func (plr *Player) TokensInRegionByStatus(start string, end string, terrain stri
 	var itStart, itEnd int
 	var tokens []string
 
-	itStart = tableIndexMap[start]
-	itEnd = tableIndexMap[end]
+	itStart = TableIndexMap[start]
+	itEnd = TableIndexMap[end]
 	if itEnd <= itStart {
 		itEnd += 8
 	}
@@ -123,6 +123,21 @@ func (plr *Player) TokensInRegionByStatus(start string, end string, terrain stri
 	}
 
 	return tokens
+}
+
+// Checks tokens in a block of status -1 and 2
+func (plr *Player) UnfirmedTokensInRegion(start string, end string, terrain string) []string {
+	return append(plr.TokensInRegionByStatus(start, end, terrain, -1), plr.TokensInRegionByStatus(start, end, terrain, 2)...)
+}
+
+// Checks tokens in a block of status -1
+func (plr *Player) UnfirmedOneTokensInRegion(start string, end string, terrain string) []string {
+	return append(plr.TokensInRegionByStatus(start, end, terrain, -1))
+}
+
+// Checks tokens in a block of status 2
+func (plr *Player) UnfirmedTwoTokensInRegion(start string, end string, terrain string) []string {
+	return append(plr.TokensInRegionByStatus(start, end, terrain, 2))
 }
 
 // Prints the matrix of current table
