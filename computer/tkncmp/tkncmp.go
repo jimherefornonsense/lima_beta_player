@@ -92,11 +92,11 @@ func isSubsetAndGetXOR(a []string, b []string) (bool, []string) {
 		}
 	}
 
-	return false, xORset
+	return false, nil
 }
 
 func computeDeductedTokens(start string, end string, terrainType string, numReportedTkns int, tarNo string, opponents []player.Player) (int, []string) {
-	var candidateTkns, obtainedTkns, xORset []string
+	var candidateTkns, obtainedTkns []string
 	var targetPOTList map[int][][]string
 	var numUnfoundObtainedTkns int
 
@@ -110,7 +110,7 @@ func computeDeductedTokens(start string, end string, terrainType string, numRepo
 	}
 	numUnfoundObtainedTkns = numReportedTkns - len(obtainedTkns)
 	if len(candidateTkns) < 1 {
-		return -1, xORset
+		return -1, nil
 	}
 
 	for nTokens, potentialTknsList := range targetPOTList {
@@ -142,7 +142,7 @@ func computeDeductedTokens(start string, end string, terrainType string, numRepo
 		}
 	}
 
-	return -1, xORset
+	return -1, nil
 }
 
 func computeTokenStatus(start string, end string, terrainType string, numReportedTkns int, token string, tarNo string, opponents []player.Player) int {

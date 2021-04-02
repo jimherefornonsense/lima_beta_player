@@ -16,12 +16,9 @@ import (
 
 // Game struct
 type Game struct {
-	totalPlayers   int
-	activePlayers  int
-	mode           int
-	current_round  int
-	maximum_rounds int
-	leftTokens     []string
+	totalPlayers int
+	autopilot    bool
+	leftTokens   []string
 }
 
 var g Game
@@ -56,7 +53,6 @@ func errorMsg(arg string) string {
 
 func (gm *Game) playerNO(args string) string {
 	gm.totalPlayers, _ = strconv.Atoi(args[len(args)-1:])
-	gm.activePlayers = gm.totalPlayers
 	fmt.Printf("There are %d players, and you are player %s.\n", gm.totalPlayers, p.No)
 	initOpponents(gm.totalPlayers)
 	return ""
@@ -129,45 +125,16 @@ func playerTurn(args string) string {
 		return ""
 	}
 
-	if g.mode == 2 {
+	if g.autopilot {
 		p.DisplayTable()
 		for _, opponent := range opponents {
 			opponent.DisplayTable()
 		}
 
-		var final_guesses_first int = 0
-		var total_guesses int = 0
-		for i := range p.Table {
-			if p.Table[i].Beach != -1 && p.Table[i].Beach != 2 {
-				final_guesses_first++
-			}
-			total_guesses++
-		}
-		fmt.Println("final_guesses")
-		fmt.Println(final_guesses_first)
+		isGuessing, tokens := p.IsGuessingAndGetAnswer()
 
-		for i := range p.Table {
-			if p.Table[i].Forest != -1 && p.Table[i].Forest != 2 {
-				final_guesses_first++
-			}
-			total_guesses++
-		}
-		fmt.Println("final_guesses")
-		fmt.Println(final_guesses_first)
-		for i := range p.Table {
-			if p.Table[i].Mountain != -1 && p.Table[i].Mountain != 2 {
-				final_guesses_first++
-			}
-			total_guesses++
-		}
-		fmt.Println("final_guesses")
-		fmt.Println(final_guesses_first)
-		fmt.Println("total")
-		fmt.Println(total_guesses)
-		fmt.Println("remaining")
-		fmt.Println(total_guesses - final_guesses_first)
-		if total_guesses-final_guesses_first == 2 {
-			return guessTokens()
+		if isGuessing {
+			return guessTokens(tokens[0], tokens[1])
 		}
 
 	} else {
@@ -199,7 +166,7 @@ func playerTurn(args string) string {
 func terrainParser(t1 string, t2 string) string {
 	terrainMap := map[string]string{"B": "Beach", "F": "Forest", "M": "Mountain", "A": "All terrians"}
 	var t string = "A"
-	if g.mode == 2 {
+	if g.autopilot {
 		var terrain_keys = [4]string{"B", "F", "M", "A"}
 		if t1 == "W" && t2 == "W" {
 			fmt.Println("first:")
@@ -275,12 +242,11 @@ func terrainParser(t1 string, t2 string) string {
 }
 
 func chooseDice(args string) string {
-	g.current_round++
 	rolledDice := strings.Split(args[3:], ",")
 	var n, die1, die2 int
 	var terrain string
 	// Temporary using random choosing, still implementing intelligent one
-	if g.mode == 2 {
+	if g.autopilot {
 		var plr int
 		rand.Seed(time.Now().UTC().UnixNano())
 		die1 = randInt(1, 3)
@@ -621,32 +587,8 @@ func isValidToken(token string) bool {
 	return false
 }
 
-func guessTokens() string {
-	var first_token string
-	var second_token string
-	var tokens []string
-
-	if g.mode == 2 {
-		for i := range p.Table {
-			if p.Table[i].Beach == -1 {
-				tokens = append(tokens, strconv.Itoa(i+1)+"B")
-			} else if p.Table[i].Forest == -1 {
-				tokens = append(tokens, strconv.Itoa(i+1)+"F")
-			} else if p.Table[i].Mountain == -1 {
-				tokens = append(tokens, strconv.Itoa(i+1)+"M")
-			}
-		}
-
-		for i := range p.Table {
-			if p.Table[i].Beach == 2 {
-				tokens = append(tokens, strconv.Itoa(i+1)+"B")
-			} else if p.Table[i].Forest == 2 {
-				tokens = append(tokens, strconv.Itoa(i+1)+"F")
-			} else if p.Table[i].Mountain == 2 {
-				tokens = append(tokens, strconv.Itoa(i+1)+"M")
-			}
-
-		}
+func guessTokens(answer ...string) string {
+	if g.autopilot {
 		/*
 			randomIndex := rand.Intn(len(tkncmp.TokenMap))
 				first_token = tkncmp.TokenMap[randomIndex]
@@ -666,10 +608,13 @@ func guessTokens() string {
 					_, found2 = Find(p.PlayerTerrains, second_token)
 				}
 		*/
-		fmt.Println("Submitting a guess:", tokens[0], tokens[1])
-		var temp string = "07:P" + p.No + "," + tokens[0] + "," + tokens[1]
+		fmt.Println("Submitting a guess:", answer[0], answer[1])
+		var temp string = "07:P" + p.No + "," + answer[0] + "," + answer[1]
 		return temp
 	} else {
+		var first_token string
+		var second_token string
+
 		fmt.Println("Choose first token: ")
 		fmt.Scanf("%s", &first_token)
 		for !isValidToken(first_token) {
@@ -744,46 +689,14 @@ func Find(slice []string, val string) (int, bool) {
 
 func main() {
 	var pNo, pipeName, toPN, fromPN string
-	var mode int = 2
+
+	pNo = "2"
+	pipeName = "all"
+	g.autopilot = true
 	flag.StringVar(&pNo, "n", "2", "player number")
 	flag.StringVar(&pipeName, "pn", "all", "pipe name")
+	flag.BoolVar(&g.autopilot, "a", true, "autopilot")
 	flag.Parse()
-	/*
-		// Mode of human-controlled or computer-controlled
-		fmt.Println("Do you want player to be controlled by human or by computer? Choose 1 for human and 2 for computer")
-		fmt.Println("1.Human")
-		fmt.Println("2.Computer")
-		fmt.Scanf("%d", &mode)
-		for mode != 1 && mode != 2 {
-			fmt.Println("Invalid selection")
-			fmt.Println("Do you want player to be controlled by human or by computer? Choose 1 for human and 2 for computer")
-			fmt.Println("1.Human")
-			fmt.Println("2.Computer")
-			fmt.Scanf("%d", &mode)
-		}
-	*/
-	g.mode = mode
-	// Set maximum round
-	if g.mode == 2 {
-		//	fmt.Println("Choose the maximum number of rounds you want")
-		//	fmt.Scanf("%d", &rounds)
-		//	for rounds < 1 {
-		//		fmt.Println("You should choose the minimum number of rounds to be 1")
-		//		fmt.Scanf("%d", &rounds)
-		//	}
-		// for rounds > 5 {
-		// 	fmt.Println("You can choose the maximum number of rounds upto 5")
-		// 	fmt.Scanf("%d", &rounds)
-		// }
-		//	g.maximum_rounds = rounds
-		g.current_round = 0
-	}
-
-	// Set player number and directory prefixed Name
-	/*
-		fmt.Println("Enter your Player Number and pipe Prefixed Name: (separated by space)")
-		fmt.Scanf("%s%s", &pNo, &pipeName)
-	*/
 	toPN = "/tmp/" + pipeName + "toP" + pNo
 	fromPN = "/tmp/" + pipeName + "fromP" + pNo
 	fmt.Println(toPN, fromPN)

@@ -125,6 +125,22 @@ func (plr *Player) TokensInRegionByStatus(start string, end string, terrain stri
 	return tokens
 }
 
+// Checks whether ready to guess, if true, return answer tokens
+func (plr *Player) IsGuessingAndGetAnswer() (bool, []string) {
+	var treasures, potentialTreasures []string
+
+	treasures = plr.TokensInRegionByStatus("NN", "NN", "A", 2)
+	if len(treasures) == 2 {
+		return true, treasures
+	}
+	potentialTreasures = plr.TokensInRegionByStatus("NN", "NN", "A", -1)
+	if len(treasures)+len(potentialTreasures) == 2 {
+		return true, append(treasures, potentialTreasures...)
+	}
+
+	return false, nil
+}
+
 // Checks tokens in a block of status -1
 func (plr *Player) UnfirmedOneTokensInRegion(start string, end string, terrain string) []string {
 	return append(plr.TokensInRegionByStatus(start, end, terrain, -1))
