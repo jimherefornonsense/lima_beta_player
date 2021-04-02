@@ -18,7 +18,7 @@ go build beta_player.go
 
 [-h]  : To know needed parameters
 
-[-n=x]  : Player number for the game - options from 1 to 4 for x (default "2")
+[-n=x]  : Player number for the game - options between 2 and 5 inclusive for x (default "2")
 
 [-pn=name] : Prefixed name for named pipe - needed to be same as server's named pipe (default "all")
 
