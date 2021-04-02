@@ -1,4 +1,4 @@
-## lima_beta_player
+# lima_beta_player
 
 A player side program of the board game "Loot Of Lima" in virtual version. 
 
@@ -14,7 +14,7 @@ go build beta_player.go
 ./beta_player
 ```
 
-# Parameters in command line
+## Parameters in command line
 
 [-h]  : To know needed parameters
 
@@ -25,6 +25,7 @@ go build beta_player.go
 [-a=bool]  : Autopilot mode - boolean value (default "true")
 
 ex.
+
 go run
 ```
 go run beta_player.go -h
