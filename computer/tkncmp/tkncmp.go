@@ -181,6 +181,8 @@ func computeTokenStatus(start string, end string, terrainType string, numReporte
 		for i, _ := range opponents {
 			if tarNo == opponents[i].No {
 				opponents[i].RecordPotentialCandidates(numUnfoundObtainedTkns, candidateTkns)
+				// Printing Potential tokens report
+				opponents[i].DisplayPotentialTokensReport()
 			}
 		}
 	}

@@ -71,14 +71,7 @@ func readMyTerrain(args string) string {
 	playerTokens := strings.Split(args[6:], ",")
 
 	tkncmp.AllocatedTokensCompute(playerTokens, &p, opponents)
-	// Init lists of potential obtained tokens for opponets
-	for i, _ := range opponents {
-		opponents[i].InitPotentialObtainedTknsList(len(playerTokens))
-	}
 
-	for _, token := range playerTokens {
-		p.PlayerTerrains = append(p.PlayerTerrains, token)
-	}
 	fmt.Println("Terrains are: " + strings.Join(playerTokens, ", "))
 	return ""
 }
@@ -119,6 +112,15 @@ func remainingWinner(args string) string {
 
 func playerTurn(args string) string {
 	message := strings.Split(args[3:], ",")
+
+	// Init lists of potential obtained tokens for opponets
+	for i, _ := range opponents {
+		if !opponents[i].IsInitListForPOT {
+			numAllocatedTokens := len(p.TokensInRegionByStatus("NN", "NN", "A", 1))
+			opponents[i].InitPotentialObtainedTknsList(numAllocatedTokens)
+			opponents[i].IsInitListForPOT = true
+		}
+	}
 
 	fmt.Println("Player " + message[0][1:] + " has rolled " + message[1] + "," + message[2] + "," + message[3])
 	if "P"+p.No != message[0] {
@@ -245,6 +247,7 @@ func chooseDice(args string) string {
 	rolledDice := strings.Split(args[3:], ",")
 	var n, die1, die2 int
 	var terrain string
+
 	// Temporary using random choosing, still implementing intelligent one
 	if g.autopilot {
 		var plr int
@@ -589,25 +592,6 @@ func isValidToken(token string) bool {
 
 func guessTokens(answer ...string) string {
 	if g.autopilot {
-		/*
-			randomIndex := rand.Intn(len(tkncmp.TokenMap))
-				first_token = tkncmp.TokenMap[randomIndex]
-				_, found := Find(p.PlayerTerrains, first_token)
-				for found {
-					randomIndex := rand.Intn(len(tkncmp.TokenMap))
-					first_token = tkncmp.TokenMap[randomIndex]
-					_, found = Find(p.PlayerTerrains, first_token)
-				}
-
-				randomIndex2 := rand.Intn(len(tkncmp.TokenMap))
-				second_token = tkncmp.TokenMap[randomIndex2]
-				_, found2 := Find(p.PlayerTerrains, second_token)
-				for found2 || first_token == second_token {
-					randomIndex2 := rand.Intn(len(tkncmp.TokenMap))
-					second_token = tkncmp.TokenMap[randomIndex2]
-					_, found2 = Find(p.PlayerTerrains, second_token)
-				}
-		*/
 		fmt.Println("Submitting a guess:", answer[0], answer[1])
 		var temp string = "07:P" + p.No + "," + answer[0] + "," + answer[1]
 		return temp

@@ -15,9 +15,9 @@ type terrains struct {
 // Player struct
 // Table's indices corresponse to island map's regions, ex: index 0 = region 1, index 1 = region 2
 type Player struct {
-	No             string
-	PlayerTerrains []string
-	Table          [8]terrains
+	No               string
+	Table            [8]terrains
+	IsInitListForPOT bool
 	// Format ex: {1:{{1B, 2B, 3B}, {1F, 2F}}, 2:{{2B, 3B, 4B}}...}
 	PotentialObtainedTknsList map[int][][]string
 }
@@ -39,6 +39,7 @@ func (plr *Player) InitPotentialObtainedTknsList(maxTkns int) {
 	for i := 1; i <= maxTkns; i++ {
 		plr.PotentialObtainedTknsList[i] = [][]string{}
 	}
+	plr.RecordPotentialCandidates(maxTkns, plr.TokensInRegionByStatus("NN", "NN", "A", -1))
 }
 
 // Parses each token and makes a record
@@ -63,6 +64,29 @@ func (plr *Player) MakeRecord(token string, tokenStatus int) {
 }
 
 func (plr *Player) RecordPotentialCandidates(nTokens int, candidates []string) {
+	// Checks there's no the same set for same number winners
+	for _, set := range plr.PotentialObtainedTknsList[nTokens] {
+		if len(set) == len(candidates) {
+			var equalityStat = make([]bool, len(set))
+			for i, va := range set {
+				var found bool = false
+				for _, vb := range candidates {
+					if va == vb {
+						found = true
+					}
+				}
+				equalityStat[i] = found
+			}
+			for _, equality := range equalityStat {
+				// Not a same set for a same number winners in record, storing it
+				if equality == false {
+					break
+				}
+				// A same set for a same number winners in record, not storing it
+				return
+			}
+		}
+	}
 	plr.PotentialObtainedTknsList[nTokens] = append(plr.PotentialObtainedTknsList[nTokens], candidates)
 }
 
@@ -175,4 +199,19 @@ func (plr *Player) DisplayTable() {
 		fmt.Printf("%2d ", trs.Mountain)
 	}
 	fmt.Print("\n")
+}
+
+// Prints the potential tokens report
+func (plr *Player) DisplayPotentialTokensReport() {
+	fmt.Printf("-------------------Player %s's potential token set report-------------------\n", plr.No)
+	for j := 1; j <= len(plr.PotentialObtainedTknsList); j++ {
+		fmt.Printf("-Winners: %-64d-\n", j)
+		fmt.Printf("-%-73s-\n", "Potential candidates in set each:")
+		for _, set := range plr.PotentialObtainedTknsList[j] {
+			setString := fmt.Sprintf("%s", set)
+			fmt.Printf("-%-73s-\n", setString)
+		}
+		fmt.Printf("-%73s-\n", "")
+	}
+	fmt.Println("---------------------------------------------------------------------------")
 }
