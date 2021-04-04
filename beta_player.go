@@ -72,6 +72,11 @@ func readMyTerrain(args string) string {
 
 	tkncmp.AllocatedTokensCompute(playerTokens, &p, opponents)
 
+	// Init lists of potential obtained tokens for opponets
+	for i, _ := range opponents {
+		opponents[i].InitPotentialObtainedTknsList(len(playerTokens))
+	}
+
 	fmt.Println("Terrains are: " + strings.Join(playerTokens, ", "))
 	return ""
 }
@@ -112,15 +117,6 @@ func remainingWinner(args string) string {
 
 func playerTurn(args string) string {
 	message := strings.Split(args[3:], ",")
-
-	// Init lists of potential obtained tokens for opponets
-	for i, _ := range opponents {
-		if !opponents[i].IsInitListForPOT {
-			numAllocatedTokens := len(p.TokensInRegionByStatus("NN", "NN", "A", 1))
-			opponents[i].InitPotentialObtainedTknsList(numAllocatedTokens)
-			opponents[i].IsInitListForPOT = true
-		}
-	}
 
 	fmt.Println("Player " + message[0][1:] + " has rolled " + message[1] + "," + message[2] + "," + message[3])
 	if "P"+p.No != message[0] {

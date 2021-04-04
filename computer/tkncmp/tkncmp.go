@@ -23,6 +23,11 @@ func LeftTokensCompute(tokens []string, plr *player.Player, opponents []player.P
 		plr.MakeRecord(token, 0)
 		for i := range opponents {
 			opponents[i].MakeRecord(token, 0)
+
+			// Makes a record
+			maxObtainedTkns := len(plr.TokensInRegionByStatus("NN", "NN", "A", 1))
+			potentialCandidates := opponents[i].TokensInRegionByStatus("NN", "NN", "A", -1)
+			opponents[i].RecordPotentialCandidates(maxObtainedTkns, potentialCandidates)
 		}
 	}
 }
@@ -34,6 +39,11 @@ func TokenInfoSwapCompute(token string, opponentNo string, plr *player.Player, o
 			opponents[i].MakeRecord(token, 1)
 		} else {
 			opponents[i].MakeRecord(token, 0)
+
+			// Makes a record
+			maxObtainedTkns := len(plr.TokensInRegionByStatus("NN", "NN", "A", 1))
+			potentialCandidates := opponents[i].TokensInRegionByStatus("NN", "NN", "A", -1)
+			opponents[i].RecordPotentialCandidates(maxObtainedTkns, potentialCandidates)
 		}
 	}
 }
@@ -56,7 +66,7 @@ func NumTknsInRegion(start string, end string, terrain string) int {
 }
 
 func isSubsetAndGetXOR(a []string, b []string) (bool, []string) {
-	var xORset []string
+	var xorSet []string
 
 	if len(a) > len(b) {
 		for _, va := range a {
@@ -67,12 +77,12 @@ func isSubsetAndGetXOR(a []string, b []string) (bool, []string) {
 				}
 			}
 			if !found {
-				xORset = append(xORset, va)
+				xorSet = append(xorSet, va)
 			}
 		}
 		// If b is a's subset
-		if len(a)-len(xORset) == len(b) {
-			return true, xORset
+		if len(a)-len(xorSet) == len(b) {
+			return true, xorSet
 		}
 	} else {
 		for _, vb := range b {
@@ -83,12 +93,12 @@ func isSubsetAndGetXOR(a []string, b []string) (bool, []string) {
 				}
 			}
 			if !found {
-				xORset = append(xORset, vb)
+				xorSet = append(xorSet, vb)
 			}
 		}
 		// If a is b's subset
-		if len(b)-len(xORset) == len(a) {
-			return true, xORset
+		if len(b)-len(xorSet) == len(a) {
+			return true, xorSet
 		}
 	}
 
@@ -116,26 +126,26 @@ func computeDeductedTokens(start string, end string, terrainType string, numRepo
 	for nTokens, potentialTknsList := range targetPOTList {
 		if nTokens == numUnfoundObtainedTkns {
 			for _, potentialTkns := range potentialTknsList {
-				foundSubset, xORset := isSubsetAndGetXOR(candidateTkns, potentialTkns)
+				foundSubset, xorSet := isSubsetAndGetXOR(candidateTkns, potentialTkns)
 				if foundSubset {
-					return 0, xORset
+					return 0, xorSet
 				}
 			}
 		} else if nTokens > numUnfoundObtainedTkns {
 			for _, potentialTkns := range potentialTknsList {
 				if len(potentialTkns)-len(candidateTkns) == nTokens-numUnfoundObtainedTkns {
-					foundSubset, xORset := isSubsetAndGetXOR(candidateTkns, potentialTkns)
+					foundSubset, xorSet := isSubsetAndGetXOR(candidateTkns, potentialTkns)
 					if foundSubset {
-						return 1, xORset
+						return 1, xorSet
 					}
 				}
 			}
 		} else if nTokens < numUnfoundObtainedTkns {
 			for _, potentialTkns := range potentialTknsList {
 				if len(candidateTkns)-len(potentialTkns) == numUnfoundObtainedTkns-nTokens {
-					foundSubset, xORset := isSubsetAndGetXOR(candidateTkns, potentialTkns)
+					foundSubset, xorSet := isSubsetAndGetXOR(candidateTkns, potentialTkns)
 					if foundSubset {
-						return 1, xORset
+						return 1, xorSet
 					}
 				}
 			}
@@ -145,49 +155,40 @@ func computeDeductedTokens(start string, end string, terrainType string, numRepo
 	return -1, nil
 }
 
-func computeTokenStatus(start string, end string, terrainType string, numReportedTkns int, token string, tarNo string, opponents []player.Player) int {
+func computeTokensStatus(start string, end string, terrainType string, numReportedTkns int, tarNo string, opponents []player.Player) (int, []string) {
 	var candidateTkns, obtainedTkns []string
-	var numUnfoundObtainedTkns, curTknStatus int
+	var numUnfoundObtainedTkns int
 
 	// Finds the target player
 	for _, opponent := range opponents {
 		if tarNo == opponent.No {
 			candidateTkns = opponent.TokensInRegionByStatus(start, end, terrainType, -1)
 			obtainedTkns = opponent.TokensInRegionByStatus(start, end, terrainType, 1)
-			curTknStatus = opponent.StatusByToken(token)
 		}
 	}
 	numUnfoundObtainedTkns = numReportedTkns - len(obtainedTkns)
 	// Case 1: Non of unfirmed tokens in the requested region or the checked token's status is firmed
-	if len(candidateTkns) == 0 || curTknStatus != -1 {
-		return -1
-	} else if len(candidateTkns) == 1 { // Case 2: 1 of unfirmed tokens in the requested region
+	if len(candidateTkns) == 0 {
+		return -1, nil
+	} else if len(candidateTkns) >= 1 { // Case 2: 1 or more of unfirmed tokens in the requested region
 		// Subcase 1
 		if numUnfoundObtainedTkns == 0 {
-			return 0
-		} else if numUnfoundObtainedTkns == 1 { // Subcase 2
-			return 1
-		}
-	} else if len(candidateTkns) > 1 { // Case 3: More than 1 of unfirmed tokens in the requested region
-		// Subcase 1
-		if numUnfoundObtainedTkns == 0 {
-			return 0
+			return 0, candidateTkns
 		} else if numUnfoundObtainedTkns == len(candidateTkns) { // Subcase 2
-			return 1
-		}
-	}
-	// Records potential obtained tokens
-	if token == candidateTkns[len(candidateTkns)-1] {
-		for i, _ := range opponents {
-			if tarNo == opponents[i].No {
-				opponents[i].RecordPotentialCandidates(numUnfoundObtainedTkns, candidateTkns)
-				// Printing Potential tokens report
-				opponents[i].DisplayPotentialTokensReport()
-			}
+			return 1, candidateTkns
 		}
 	}
 
-	return -1
+	// Records potential obtained tokens
+	for i, _ := range opponents {
+		if tarNo == opponents[i].No {
+			opponents[i].RecordPotentialCandidates(numUnfoundObtainedTkns, candidateTkns)
+			// Printing Potential tokens report
+			opponents[i].DisplayPotentialTokensReport()
+		}
+	}
+
+	return -1, nil
 }
 
 func updatePlayerTable(status int, token string, tarNo string, opponents []player.Player, plr *player.Player) {
@@ -232,24 +233,19 @@ func isTreasure(token string, opponents []player.Player, plr *player.Player) boo
 }
 
 func PlayerReportCompute(msg []string, plr *player.Player, opponents []player.Player) {
-	var idxFrom, idxEnd, itEnd, numReportedTkns int
-	var tarNo, terrain string
+	var numReportedTkns int
+	var startPosition, endPosition, tarNo, terrain string
 
-	idxFrom = directionIndexMap[msg[0][:2]]
-	idxEnd = directionIndexMap[msg[1][:2]]
-	itEnd = idxEnd
-	// In the case ex: WW:18 to NE:3 or NN:0 to NN:0
-	if idxEnd <= idxFrom {
-		itEnd += 24
-	}
+	startPosition = msg[0][:2]
+	endPosition = msg[1][:2]
 	tarNo = msg[4][1:]
 	terrain = msg[2]
 	numReportedTkns, _ = strconv.Atoi(msg[3])
 
 	// Deducts potential tokens by comparing history report
 	// Tokens in the set would be deducted from potential tokens for a firmed status
-	dStatus, xORset := computeDeductedTokens(msg[0][:2], msg[1][:2], terrain, numReportedTkns, tarNo, opponents)
-	for _, dToken := range xORset {
+	dStatus, xorSet := computeDeductedTokens(startPosition, endPosition, terrain, numReportedTkns, tarNo, opponents)
+	for _, dToken := range xorSet {
 		updatePlayerTable(dStatus, dToken, tarNo, opponents, plr)
 		// If the token is a treasure location
 		if isTreasure(dToken, opponents, plr) {
@@ -257,17 +253,14 @@ func PlayerReportCompute(msg []string, plr *player.Player, opponents []player.Pl
 		}
 	}
 
-	for idxFrom != itEnd {
-		// A current token in the searched region
-		token := TokenMap[idxFrom%24]
-		if terrain == "A" || terrain == token[1:] {
-			status := computeTokenStatus(msg[0][:2], msg[1][:2], terrain, numReportedTkns, token, tarNo, opponents)
-			updatePlayerTable(status, token, tarNo, opponents, plr)
-			// If the token is a treasure location
-			if isTreasure(token, opponents, plr) {
-				updatePlayerTable(2, token, tarNo, opponents, plr)
-			}
+	// Computes current report of tokens' status
+	// Tokens in the set would be setted for a firmed status
+	status, tokenSet := computeTokensStatus(startPosition, endPosition, terrain, numReportedTkns, tarNo, opponents)
+	for _, token := range tokenSet {
+		updatePlayerTable(status, token, tarNo, opponents, plr)
+		// If the token is a treasure location
+		if isTreasure(token, opponents, plr) {
+			updatePlayerTable(2, token, tarNo, opponents, plr)
 		}
-		idxFrom++
 	}
 }

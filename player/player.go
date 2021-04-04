@@ -15,9 +15,8 @@ type terrains struct {
 // Player struct
 // Table's indices corresponse to island map's regions, ex: index 0 = region 1, index 1 = region 2
 type Player struct {
-	No               string
-	Table            [8]terrains
-	IsInitListForPOT bool
+	No    string
+	Table [8]terrains
 	// Format ex: {1:{{1B, 2B, 3B}, {1F, 2F}}, 2:{{2B, 3B, 4B}}...}
 	PotentialObtainedTknsList map[int][][]string
 }
