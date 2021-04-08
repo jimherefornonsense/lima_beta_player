@@ -166,12 +166,7 @@ func (plr *Player) IsGuessingAndGetAnswer() (bool, []string) {
 
 // Checks tokens in a block of status -1
 func (plr *Player) UnfirmedOneTokensInRegion(start string, end string, terrain string) []string {
-	return append(plr.TokensInRegionByStatus(start, end, terrain, -1))
-}
-
-// Checks tokens in a block of status 2
-func (plr *Player) UnfirmedTwoTokensInRegion(start string, end string, terrain string) []string {
-	return append(plr.TokensInRegionByStatus(start, end, terrain, 2))
+	return plr.TokensInRegionByStatus(start, end, terrain, -1)
 }
 
 // Prints the matrix of current table
