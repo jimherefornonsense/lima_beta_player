@@ -128,6 +128,10 @@ func computeDeductedTokens(start string, end string, terrainType string, numRepo
 			for _, potentialTkns := range potentialTknsList {
 				foundSubset, xorSet := isSubsetAndGetXOR(candidateTkns, potentialTkns)
 				if foundSubset {
+					// Testing
+					// fmt.Println("current reported candidates: ", candidateTkns)
+					// fmt.Println("history reported candidates: ", potentialTkns)
+					// fmt.Println("deducted tokens: ", xorSet)
 					return 0, xorSet
 				}
 			}
@@ -243,7 +247,7 @@ func PlayerReportCompute(msg []string, plr *player.Player, opponents []player.Pl
 	numReportedTkns, _ = strconv.Atoi(msg[3])
 
 	// Deducts potential tokens by comparing history report
-	// Tokens in the set would be deducted from potential tokens for a firmed status
+	// Tokens in the set are deducted from potential tokens for a firmed status
 	dStatus, xorSet := computeDeductedTokens(startPosition, endPosition, terrain, numReportedTkns, tarNo, opponents)
 	for _, dToken := range xorSet {
 		updatePlayerTable(dStatus, dToken, tarNo, opponents, plr)

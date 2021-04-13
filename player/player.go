@@ -166,12 +166,7 @@ func (plr *Player) IsGuessingAndGetAnswer() (bool, []string) {
 
 // Checks tokens in a block of status -1
 func (plr *Player) UnfirmedOneTokensInRegion(start string, end string, terrain string) []string {
-	return append(plr.TokensInRegionByStatus(start, end, terrain, -1))
-}
-
-// Checks tokens in a block of status 2
-func (plr *Player) UnfirmedTwoTokensInRegion(start string, end string, terrain string) []string {
-	return append(plr.TokensInRegionByStatus(start, end, terrain, 2))
+	return plr.TokensInRegionByStatus(start, end, terrain, -1)
 }
 
 // Prints the matrix of current table
@@ -205,7 +200,7 @@ func (plr *Player) DisplayPotentialTokensReport() {
 	fmt.Printf("-------------------Player %s's potential token set report-------------------\n", plr.No)
 	for j := 1; j <= len(plr.PotentialObtainedTknsList); j++ {
 		fmt.Printf("-Winners: %-64d-\n", j)
-		fmt.Printf("-%-73s-\n", "Potential candidates in set each:")
+		fmt.Printf("-%-73s-\n", "List of Potential candidates set:")
 		for _, set := range plr.PotentialObtainedTknsList[j] {
 			setString := fmt.Sprintf("%s", set)
 			fmt.Printf("-%-73s-\n", setString)

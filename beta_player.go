@@ -22,7 +22,7 @@ type Game struct {
 	leftTokens   []string
 }
 
-type Combinations struct{
+type Combinations struct {
 	No         string
 	regions    [2]int
 	num_tokens int
@@ -131,6 +131,7 @@ func remainingWinner(args string) string {
 
 	fmt.Printf("%s wins as the only remaining player. All others have guessed incorrectly and been disqualified. The treasures are located at %s and %s\n",
 		message[0], message[1], message[2])
+	os.Exit(0)
 	return ""
 }
 
@@ -307,52 +308,48 @@ func chooseDice(args string) string {
 	if g.autopilot {
 		var plr string
 		message := strings.Split(args[3:], ",")
-		
 
 		var combinations_group []Combinations
 
 		opponents_sets := make(map[string][]string)
 
-		
 		for j := range opponents {
 			for i := 1; i <= 3; i++  {
 				for k := i+1; k <= 3; k++  {
-			var c1 Combinations 
-			c1.potentials = make(map[string][]string)
-			c1.potentials["A"] = opponents[j].UnfirmedOneTokensInRegion(message[i][:2], message[k][:2], "A")
-			c1.potentials["B"] = opponents[j].UnfirmedOneTokensInRegion(message[i][:2], message[k][:2], "B")
-			c1.potentials["F"] = opponents[j].UnfirmedOneTokensInRegion(message[i][:2], message[k][:2], "F")
-			c1.potentials["M"] = opponents[j].UnfirmedOneTokensInRegion(message[i][:2], message[k][:2], "M")
+          var c1 Combinations 
+          c1.potentials = make(map[string][]string)
+          c1.potentials["A"] = opponents[j].UnfirmedOneTokensInRegion(message[i][:2], message[k][:2], "A")
+          c1.potentials["B"] = opponents[j].UnfirmedOneTokensInRegion(message[i][:2], message[k][:2], "B")
+          c1.potentials["F"] = opponents[j].UnfirmedOneTokensInRegion(message[i][:2], message[k][:2], "F")
+          c1.potentials["M"] = opponents[j].UnfirmedOneTokensInRegion(message[i][:2], message[k][:2], "M")
 
-			c1.num_tokens = tkncmp.NumTknsInRegion(message[i][:2], message[k][:2], "A")
-			c1.regions = [2]int{i, k}
-			c1.No = opponents[j].No
+          c1.num_tokens = tkncmp.NumTknsInRegion(message[i][:2], message[k][:2], "A")
+          c1.regions = [2]int{i, k}
+          c1.No = opponents[j].No
 
-			var c2 Combinations 
-			c2.potentials = make(map[string][]string)
-			c2.potentials["A"] = opponents[j].UnfirmedOneTokensInRegion(message[k][:2], message[i][:2], "A")
-			c2.potentials["B"] = opponents[j].UnfirmedOneTokensInRegion(message[k][:2], message[i][:2], "B")
-			c2.potentials["F"] = opponents[j].UnfirmedOneTokensInRegion(message[k][:2], message[i][:2], "F")
-			c2.potentials["M"] = opponents[j].UnfirmedOneTokensInRegion(message[k][:2], message[i][:2], "M")
+          var c2 Combinations 
+          c2.potentials = make(map[string][]string)
+          c2.potentials["A"] = opponents[j].UnfirmedOneTokensInRegion(message[k][:2], message[i][:2], "A")
+          c2.potentials["B"] = opponents[j].UnfirmedOneTokensInRegion(message[k][:2], message[i][:2], "B")
+          c2.potentials["F"] = opponents[j].UnfirmedOneTokensInRegion(message[k][:2], message[i][:2], "F")
+          c2.potentials["M"] = opponents[j].UnfirmedOneTokensInRegion(message[k][:2], message[i][:2], "M")
 
-			c2.num_tokens = tkncmp.NumTknsInRegion(message[k][:2], message[i][:2], "A")
-			c2.regions = [2]int{k, i}
-			c2.No = opponents[j].No
-		
-			combinations_group = append(combinations_group,c1)
-			combinations_group = append(combinations_group,c2)
+          c2.num_tokens = tkncmp.NumTknsInRegion(message[k][:2], message[i][:2], "A")
+          c2.regions = [2]int{k, i}
+          c2.No = opponents[j].No
+
+          combinations_group = append(combinations_group,c1)
+          combinations_group = append(combinations_group,c2)
 				}
-		
-		}
-		var temp []string
-		for l := 1; l <= len(opponents[j].PotentialObtainedTknsList); l++ {
-	
-			for _, set := range opponents[j].PotentialObtainedTknsList[l] {
-				setString :=  fmt.Sprintf("%s", set)
-				temp = append(temp,setString)
 			}
-		} 
-		opponents_sets[opponents[j].No] = temp
+			var temp []string
+			for l := 1; l <= len(opponents[j].PotentialObtainedTknsList); l++ {
+				for _, set := range opponents[j].PotentialObtainedTknsList[l] {
+					setString := fmt.Sprintf("%s", set)
+					temp = append(temp, setString)
+				}
+			}
+			opponents_sets[opponents[j].No] = temp
 		}
 
 		sort.SliceStable(combinations_group, func(i, j int) bool {
@@ -363,7 +360,7 @@ func chooseDice(args string) string {
 			
 //			return  len(combinations_group[i].potentials["A"]) > 0 && len(combinations_group[j].potentials["A"]) > 0 && combinations_group[i].num_tokens > combinations_group[j].num_tokens
 		})
-		
+	
          var decided_player Combinations
 	for i :=0; i<len(combinations_group); i++ {
 		_, found := Find(opponents_sets[combinations_group[i].No], fmt.Sprintf("%s", combinations_group[i].potentials["A"]))
@@ -387,8 +384,16 @@ func chooseDice(args string) string {
 		}
 
 	}
-	
 
+		for i := 0; i < len(combinations_group); i++ {
+			_, found := Find(opponents_sets[combinations_group[i].No], fmt.Sprintf("%s", combinations_group[i].potentials))
+			if !found {
+				plr = combinations_group[i].No
+				die1 = combinations_group[i].regions[0]
+				die2 = combinations_group[i].regions[1]
+				break
+			}
+		}
 
 if die1==0 || die2==0 {
 	sort.SliceStable(combinations_group, func(i, j int) bool {
@@ -420,13 +425,13 @@ plr = combinations_group[0].No
 			plr = opponents[1].No
 		}
 		*/
-	/*	plr = randInt(1, len(opponents)+1)
-		for strconv.Itoa(plr) == p.No {
-			plr = randInt(1, len(opponents)+1)
-		}*/
+		/*	plr = randInt(1, len(opponents)+1)
+			for strconv.Itoa(plr) == p.No {
+				plr = randInt(1, len(opponents)+1)
+			}*/
 		var temp string = "05:" + rolledDice[die1] + "," + rolledDice[die2] + "," + terrain + ",P" + plr
-		
-//	fmt.Println(strconv.Itoa(plr))
+
+		//	fmt.Println(strconv.Itoa(plr))
 		fmt.Println(len(opponents))
 		fmt.Println("temp-" + temp)
 		return temp
@@ -544,6 +549,7 @@ func guessCorrect(args string) string {
 		stringSlice2[0])
 	fmt.Printf("The treasures were located at %s and %s.\n",
 		stringSlice2[1], stringSlice2[2])
+	os.Exit(0)
 	return ""
 }
 
