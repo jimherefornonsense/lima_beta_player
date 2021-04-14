@@ -196,7 +196,7 @@ func Pistoling(opponents []player.Player) (string, string, string, string) {
 	var index int
 	var directionSet string = "NN|NE|EE|SE|SS|SW|WW|NW"
 
-	fmt.Println("Choose two directions of start and end (NN NE EE SE SS SW WW NW NN), and a terrain (B: Beach F: Forest M: Mountain), and a player you want to ask by number (separate by space)")
+	fmt.Println("Choose two directions of start and end (NN NE EE SE SS SW WW NW NN), and a terrain (B: Beach F: Forest M: Mountain A: All terrains), and a player you want to ask by number (separate by space)")
 	for i := range opponents {
 		fmt.Printf("%d. Player %s\n", i+1, opponents[i].No)
 	}
@@ -204,7 +204,7 @@ func Pistoling(opponents []player.Player) (string, string, string, string) {
 	start = strings.ToUpper(start)
 	end = strings.ToUpper(end)
 	t = strings.ToUpper(t)
-	for !strings.Contains(directionSet, start) || !strings.Contains(directionSet, end) || (t != "B" && t != "F" && t != "M") || index > len(opponents) || index < 1 {
+	for !strings.Contains(directionSet, start) || !strings.Contains(directionSet, end) || (t != "B" && t != "F" && t != "M" && t != "A") || index > len(opponents) || index < 1 {
 		fmt.Println("Submit the right format!")
 		fmt.Scanf("%s%s%s%d", &start, &end, &t, &index)
 		start = strings.ToUpper(start)
