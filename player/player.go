@@ -19,6 +19,10 @@ type Player struct {
 	Table [8]terrains
 	// Format ex: {1:{{1B, 2B, 3B}, {1F, 2F}}, 2:{{2B, 3B, 4B}}...}
 	PotentialObtainedTknsList map[int][][]string
+	//Special abilities 0: no usage, 1: ready to use
+	Pistol int
+	Shovel int
+	Barrel int
 }
 
 var TableIndexMap = map[string]int{"NN": 0, "NE": 1, "EE": 2, "SE": 3, "SS": 4, "SW": 5, "WW": 6, "NW": 7}
@@ -30,6 +34,10 @@ func NewPlayer(playerNo string) Player {
 		plr.Table[i].Forest = -1
 		plr.Table[i].Mountain = -1
 	}
+	plr.Pistol = 1
+	plr.Shovel = 1
+	plr.Barrel = 1
+
 	return plr
 }
 
@@ -60,6 +68,28 @@ func (plr *Player) MakeRecord(token string, tokenStatus int) {
 			plr.Table[region-1].Mountain = tokenStatus
 		}
 	}
+}
+
+func (plr *Player) UseAbility(abilityCode string) bool {
+	switch abilityCode {
+	case "P":
+		if plr.Pistol != 0 {
+			plr.Pistol--
+			return true
+		}
+	case "S":
+		if plr.Shovel != 0 {
+			plr.Shovel--
+			return true
+		}
+	case "B":
+		if plr.Barrel != 0 {
+			plr.Barrel--
+			return true
+		}
+	}
+
+	return false
 }
 
 func (plr *Player) RecordPotentialCandidates(nTokens int, candidates []string) {
@@ -208,4 +238,12 @@ func (plr *Player) DisplayPotentialTokensReport() {
 		fmt.Printf("-%73s-\n", "")
 	}
 	fmt.Println("---------------------------------------------------------------------------")
+}
+
+func (plr *Player) DisplayUsageSpecialAbilities() {
+	fmt.Printf("--------------------\n")
+	fmt.Println("Pistol usage:", plr.Pistol)
+	fmt.Println("Shovel usage:", plr.Shovel)
+	fmt.Println("Barrel usage:", plr.Barrel)
+	fmt.Printf("--------------------\n")
 }
