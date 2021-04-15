@@ -27,6 +27,7 @@ type Combinations struct{
 	regions             [2]int
 	num_tokens          int
 	terrain             string
+	unchosen_dice       int
 	potentials          []string
 }
 
@@ -63,7 +64,6 @@ var functions = map[string]fn{
 	"09": guessIncorrect,
 	"10": tokenInfoSwap,
 	"11": remainingWinner,
-//	"12": barrelReport,
 	"14": pistolReport,
 	"15": interrogationReport,
 	"99": errorMsg,
@@ -297,7 +297,12 @@ func chooseDice(args string) string {
 					
 
 			var c1 Combinations 
-		
+			for l := 1; l<=3; l++ {
+				if l!=i && l!=k {
+					c1.unchosen_dice = l
+				} 
+			   }
+
 			c1.terrain = terrainParser_comp(message[i],message[k],opponents[j]);
 			c1.potentials = opponents[j].UnfirmedOneTokensInRegion(message[i][:2], message[k][:2], c1.terrain)
 			
@@ -307,7 +312,11 @@ func chooseDice(args string) string {
 			c1.No = opponents[j].No
 
 			var c2 Combinations 
-			
+			for l := 1; l<=3; l++ {
+				if l!=i && l!=k {
+					c2.unchosen_dice = l
+				} 
+			   }
 
 			c2.terrain = terrainParser_comp(message[k],message[i],opponents[j]);
 			c2.potentials = opponents[j].UnfirmedOneTokensInRegion(message[k][:2], message[i][:2], c2.terrain)
@@ -380,9 +389,12 @@ plr = combinations_group[0].No
 		
 	comp_SPA = "Q"
 	if p.Shovel > 0 {
-		 if len(p.UnfirmedTwoTokensInRegion("NN","NW","A")) > 0 && message[die1][2:] == message[die2][2:] {
-        fmt.Println("used shovel")
-			terrain="A"
+//		 if len(p.UnfirmedTwoTokensInRegion("NN","NW","A")) > 0 && message[die1][2:] == message[die2][2:] {
+   	 if message[die1][2:] == message[die2][2:] {
+
+	fmt.Println("latest_shovel")
+		shovel(rolledDice,die1,"A")
+			terrain=rolledDice[die1][2:]
 		 comp_SPA="S"
 		 p.Shovel --;
 		 }
@@ -470,18 +482,8 @@ func pistolReport(args string) string {
 }
 
 
-func barrelReport(args string) string {
-	message := strings.Split(args[3:], ",")
 
-	for i, _ := range opponents {
-		if opponents[i].No == message[0][1:] {
-			opponents[i].UseAbility("B")
-		}
-	}
-	fmt.Println("Player " + message[0][1:] + " has rolled " + message[1] + "," + message[2] + "," + message[3])
 
-	return ""
-}
 
 func shovelReport(args string) string {
 	message := strings.Split(args[3:], ",")
