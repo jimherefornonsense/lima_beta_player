@@ -23,11 +23,12 @@ type Game struct {
 }
 
 type Combinations struct{
-	No         string
-	regions    [2]int
-	num_tokens int
-	terrain    string
-	potentials []string
+	No                  string
+	regions             [2]int
+	num_tokens          int
+	terrain             string
+	unchosen_dice       int
+	potentials          []string
 }
 
 type map_entry struct {
@@ -275,6 +276,7 @@ func chooseDice(args string) string {
 	var n int
 	var die1 int = 0
 	var die2 int = 0
+	var comp_SPA string
 	var terrain string
 
 	// Temporary using random choosing, still implementing intelligent one
@@ -291,15 +293,31 @@ func chooseDice(args string) string {
 		for j := range opponents {
 			for i := 1; i <= 3; i++  {
 				for k := i+1; k <= 3; k++  {
+
+					
+
 			var c1 Combinations 
+			for l := 1; l<=3; l++ {
+				if l!=i && l!=k {
+					c1.unchosen_dice = l
+				} 
+			   }
+
 			c1.terrain = terrainParser_comp(message[i],message[k],opponents[j]);
 			c1.potentials = opponents[j].UnfirmedOneTokensInRegion(message[i][:2], message[k][:2], c1.terrain)
 			
+
 			c1.num_tokens = tkncmp.NumTknsInRegion(message[i][:2], message[k][:2], c1.terrain)
 			c1.regions = [2]int{i, k}
 			c1.No = opponents[j].No
 
 			var c2 Combinations 
+			for l := 1; l<=3; l++ {
+				if l!=i && l!=k {
+					c2.unchosen_dice = l
+				} 
+			   }
+
 			c2.terrain = terrainParser_comp(message[k],message[i],opponents[j]);
 			c2.potentials = opponents[j].UnfirmedOneTokensInRegion(message[k][:2], message[i][:2], c2.terrain)
 		
@@ -334,7 +352,6 @@ func chooseDice(args string) string {
 		
 			
 		})
-		
 	for i :=0; i<len(combinations_group); i++ {
 		_, found := Find(opponents_sets[combinations_group[i].No], fmt.Sprintf("%s", combinations_group[i].potentials))
 		if !found {
@@ -370,10 +387,22 @@ plr = combinations_group[0].No
 	fmt.Println(die2)
 	fmt.Println(plr)
 		
-		 
+	comp_SPA = "Q"
+	if p.Shovel > 0 {
+//		 if len(p.UnfirmedTwoTokensInRegion("NN","NW","A")) > 0 && message[die1][2:] == message[die2][2:] {
+   	 if message[die1][2:] == message[die2][2:] {
+
+	fmt.Println("latest_shovel")
+		shovel(rolledDice,die1,"A")
+			terrain=rolledDice[die1][2:]
+		 comp_SPA="S"
+		 p.Shovel --;
+		 }
+		}
 	
 	
-		var temp string = "05:" + rolledDice[die1] + "," + rolledDice[die2] + "," + terrain + ",P" + plr
+		var temp string = "05:" + rolledDice[die1] + "," + rolledDice[die2] + "," + terrain + ",P" + plr + "," + comp_SPA
+
 		
 		fmt.Println(len(opponents))
 		fmt.Println("temp-" + temp)
@@ -405,7 +434,7 @@ plr = combinations_group[0].No
 	}
 	n = human.ChoosePlayerByIndex(len(opponents))
 
-	plr = opponents[n-1].No
+	plr := opponents[n-1].No
 
 	var temp string = "05:" + rolledDice[die1] + "," + rolledDice[die2] + "," + terrain + ",P" + plr + "," + spA
 	//var temp string = "05:" + "NNB" + "," + "NNB" + "," + "B" + ",P" + plr + "," + spA
@@ -451,6 +480,24 @@ func pistolReport(args string) string {
 
 	return ""
 }
+
+
+
+
+
+func shovelReport(args string) string {
+	message := strings.Split(args[3:], ",")
+
+	for i, _ := range opponents {
+		if opponents[i].No == message[0][1:] {
+			opponents[i].UseAbility("S")
+		}
+	}
+	fmt.Printf("Player %s used pistol to Player %s\n", message[0][1:], message[1][1:])
+
+	return ""
+}
+
 
 func guessTokens(answer ...string) string {
 	fmt.Println("Submitting a guess:", answer[0], answer[1])
@@ -499,6 +546,8 @@ func readFromPipe(fd *os.File, rd *bufio.Reader) string {
 
 // Writes to "fromPN" named pipe
 func writeToPipe(fd1 *os.File, args string) {
+	fmt.Println("written msg")
+	fmt.Println(args)
 	fd1.Write([]byte(args))
 }
 
@@ -550,6 +599,8 @@ func main() {
 		}
 		playerReply := selectedFunction(functions[serverSaid[:2]], strings.TrimSpace(serverSaid))
 		if playerReply != "" {
+			fmt.Println("PlayerReply")
+			fmt.Println(playerReply)
 			writeToPipe(fd1, playerReply)
 		}
 	}
