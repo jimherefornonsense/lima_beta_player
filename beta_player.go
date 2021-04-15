@@ -294,18 +294,19 @@ func chooseDice(args string) string {
 						c2.terrain = t
 						c2.potentials = opponents[j].UnfirmedOneTokensInRegion(rolledDice[k][:2], rolledDice[i][:2], t)
 
-						if isNewPotentialSet(c1.potentials, opponents[j]) {
+						if len(c1.potentials) != 0 && isNewPotentialSet(c1.potentials, opponents[j]) {
 							combinations_group = append(combinations_group, c1)
 						}
-						if isNewPotentialSet(c2.potentials, opponents[j]) {
+						if len(c2.potentials) != 0 && isNewPotentialSet(c2.potentials, opponents[j]) {
 							combinations_group = append(combinations_group, c2)
 						}
-
 						// Just in case there is no new potential set
-						plr = c1.No
-						die1 = c1.regions[0]
-						die2 = c1.regions[1]
-						terrain = c1.terrain
+						if len(c1.potentials) != 0 {
+							plr = c1.No
+							die1 = c1.regions[0]
+							die2 = c1.regions[1]
+							terrain = c1.terrain
+						}
 					}
 					// var c1 Combinations
 
