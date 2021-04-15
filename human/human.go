@@ -63,7 +63,8 @@ func GuessTreasures() (string, string) {
 	return firstToken, secondToken
 }
 
-func ChooseTerrain(terrainMap map[string]string, t1 string, t2 string) string {
+func ChooseTerrain(t1 string, t2 string) string {
+	terrainMap := map[string]string{"B": "Beach", "F": "Forest", "M": "Mountain", "A": "All terrians"}
 	var t string = "A"
 
 	if t1 == "W" && t2 == "W" {

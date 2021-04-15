@@ -22,10 +22,9 @@ type Game struct {
 	leftTokens   []string
 }
 
-type Combinations struct{
+type Combination struct {
 	No         string
 	regions    [2]int
-	num_tokens int
 	terrain    string
 	potentials []string
 }
@@ -177,46 +176,6 @@ func playerTurn(args string) string {
 	return chooseDice(args)
 }
 
-func terrainParser(t1 string, t2 string) string {
-	terrainMap := map[string]string{"B": "Beach", "F": "Forest", "M": "Mountain", "A": "All terrians"}
-	var t string = "A"
-
-	if g.autopilot {
-		var terrain_keys = [4]string{"B", "F", "M", "A"}
-		if t1 == "W" && t2 == "W" {
-			fmt.Println("first:")
-			for k, v := range terrainMap {
-				fmt.Printf("%s: %s\n", k, v)
-			}
-			randomIndex := rand.Intn(len(terrain_keys))
-			t = terrain_keys[randomIndex]
-		} else if t1 == "W" && t2 != "W" {
-			fmt.Println("second:")
-			randomIndex := rand.Intn(len(terrain_keys))
-			t = terrain_keys[randomIndex]
-			for t != "A" && t != t2 {
-				randomIndex := rand.Intn(len(terrain_keys))
-				t = terrain_keys[randomIndex]
-			}
-		} else if t1 != "W" && t2 == "W" {
-			fmt.Println("third:")
-			randomIndex := rand.Intn(len(terrain_keys))
-			t = terrain_keys[randomIndex]
-
-			for t != "A" && t != t1 {
-				randomIndex := rand.Intn(len(terrain_keys))
-				t = terrain_keys[randomIndex]
-			}
-		} else if t1 == t2 {
-			fmt.Println("fourth:")
-			return t1
-		}
-		return t
-	}
-
-	return human.ChooseTerrain(terrainMap, t1, t2)
-}
-
 // Special abilities
 func pistol(d1 string, d2 string, t string, pNo string) string {
 	var msg string
@@ -231,43 +190,79 @@ func shovel(selectedDice []string, index int, swappedTerrain string) {
 	fmt.Println(selectedDice[index])
 }
 
-func terrainParser_comp(t1 string, t2 string, plr player.Player) string {
-	var t string = "A"
+func terrainParser_comp(t1 string, t2 string, plr player.Player) []string {
+	// var t string = "A"
 
-	var m = make(map[string]int)
- m["A"] =  len(plr.UnfirmedOneTokensInRegion(t1[:2], t2[:2], "A"))	
- m["B"] =  len(plr.UnfirmedOneTokensInRegion(t1[:2], t2[:2], "B"))
- m["F"] =  len(plr.UnfirmedOneTokensInRegion(t1[:2], t2[:2], "F"))
- m["M"] =  len(plr.UnfirmedOneTokensInRegion(t1[:2], t2[:2], "M"))
-	
-	
+	// var m = make(map[string]int)
+	// m["A"] = len(plr.UnfirmedOneTokensInRegion(t1[:2], t2[:2], "A"))
+	// m["B"] = len(plr.UnfirmedOneTokensInRegion(t1[:2], t2[:2], "B"))
+	// m["F"] = len(plr.UnfirmedOneTokensInRegion(t1[:2], t2[:2], "F"))
+	// m["M"] = len(plr.UnfirmedOneTokensInRegion(t1[:2], t2[:2], "M"))
 
-	var es map_entries
-	for k, v := range m {
-		es = append(es, map_entry{val: v, key: k})
+	// var es map_entries
+	// for k, v := range m {
+	// 	es = append(es, map_entry{val: v, key: k})
+	// }
+
+	// sort.Sort(sort.Reverse(es))
+
+	// if t1[2:] == "W" && t2[2:] == "W" {
+	// 	t = es[0].key
+	// 	//t = "A"
+	// 	return t
+	// } else if t1[2:] == "W" && t2[2:] != "W" {
+	// 	t = "A"
+	// } else if t1[2:] != "W" && t2[2:] == "W" {
+	// 	fmt.Println("third:")
+	// 	t = "A"
+	// } else if t1[2:] == t2[2:] {
+	// 	fmt.Println("fourth:")
+	// 	return t1[2:]
+	// }
+	var terrains = []string{}
+
+	if t1 == "W" && t2 == "W" {
+		terrains = append(terrains, "A")
+		terrains = append(terrains, "B")
+		terrains = append(terrains, "F")
+		terrains = append(terrains, "M")
+	} else if t1 == "W" && t2 != "W" {
+		terrains = append(terrains, "A")
+		terrains = append(terrains, t2)
+	} else if t1 != "W" && t2 == "W" {
+		terrains = append(terrains, "A")
+		terrains = append(terrains, t1)
+	} else if t1 == t2 {
+		terrains = append(terrains, t1)
 	}
-	
-	sort.Sort(sort.Reverse(es))
-	
 
-	if t1[2:] == "W" && t2[2:] == "W" {
-		
-		t = es[0].key
-	//t = "A"
-	return t
-	} else if t1[2:] == "W" && t2[2:] != "W" {
-		
-		t = "A"
-	} else if t1[2:] != "W" && t2[2:] == "W" {
-		fmt.Println("third:")
-		t = "A"
-	} else if t1[2:] == t2[2:] {
-		fmt.Println("fourth:")
-		return t1[2:]
+	return terrains
+}
+
+// Checks there's no the same set in history sets
+func isNewPotentialSet(candidates []string, plr player.Player) bool {
+	for _, sets := range plr.PotentialObtainedTknsList {
+		for _, set := range sets {
+			if len(set) == len(candidates) {
+				var equalityCounter int = 0
+				setString := fmt.Sprintf("%s", set)
+
+				for _, token := range candidates {
+					if strings.Contains(setString, token) {
+						equalityCounter++
+					}
+				}
+
+				// Evaluating
+				if equalityCounter == len(candidates) {
+					// A same set in record
+					return false
+				}
+			}
+		}
 	}
-	
-//	return  es[0].key
-	return t
+
+	return true
 }
 
 func chooseDice(args string) string {
@@ -275,112 +270,122 @@ func chooseDice(args string) string {
 	var n int
 	var die1 int = 0
 	var die2 int = 0
-	var terrain string
+	var terrain, plr string
 
 	// Temporary using random choosing, still implementing intelligent one
 	if g.autopilot {
-		var plr string
-		message := strings.Split(args[3:], ",")
-		
+		var combinations_group []Combination
+		// opponents_sets := make(map[string][]string)
 
-		var combinations_group []Combinations
-
-		opponents_sets := make(map[string][]string)
-
-		
 		for j := range opponents {
-			for i := 1; i <= 3; i++  {
-				for k := i+1; k <= 3; k++  {
-			var c1 Combinations 
-			c1.terrain = terrainParser_comp(message[i],message[k],opponents[j]);
-			c1.potentials = opponents[j].UnfirmedOneTokensInRegion(message[i][:2], message[k][:2], c1.terrain)
-			
-			c1.num_tokens = tkncmp.NumTknsInRegion(message[i][:2], message[k][:2], c1.terrain)
-			c1.regions = [2]int{i, k}
-			c1.No = opponents[j].No
+			for i := 1; i <= 3; i++ {
+				for k := i + 1; k <= 3; k++ {
+					terrains := terrainParser_comp(rolledDice[i][2:], rolledDice[k][2:], opponents[j])
+					for _, t := range terrains {
+						var c1 Combination
+						c1.No = opponents[j].No
+						c1.regions = [2]int{i, k}
+						c1.terrain = t
+						c1.potentials = opponents[j].UnfirmedOneTokensInRegion(rolledDice[i][:2], rolledDice[k][:2], t)
 
-			var c2 Combinations 
-			c2.terrain = terrainParser_comp(message[k],message[i],opponents[j]);
-			c2.potentials = opponents[j].UnfirmedOneTokensInRegion(message[k][:2], message[i][:2], c2.terrain)
-		
-			c2.num_tokens = tkncmp.NumTknsInRegion(message[k][:2], message[i][:2], c2.terrain)
-			c2.regions = [2]int{k, i}
-			c2.No = opponents[j].No
-		
-			combinations_group = append(combinations_group,c1)
-			combinations_group = append(combinations_group,c2)
+						var c2 Combination
+						c2.No = opponents[j].No
+						c2.regions = [2]int{k, i}
+						c2.terrain = t
+						c2.potentials = opponents[j].UnfirmedOneTokensInRegion(rolledDice[k][:2], rolledDice[i][:2], t)
+
+						if isNewPotentialSet(c1.potentials, opponents[j]) {
+							combinations_group = append(combinations_group, c1)
+						}
+						if isNewPotentialSet(c2.potentials, opponents[j]) {
+							combinations_group = append(combinations_group, c2)
+						}
+
+						// Just in case there is no new potential set
+						plr = c1.No
+						die1 = c1.regions[0]
+						die2 = c1.regions[1]
+						terrain = c1.terrain
+					}
+					// var c1 Combinations
+
+					// c1.terrain = terrainParser_comp(rolledDice[i], rolledDice[k], opponents[j])
+					// c1.potentials = opponents[j].UnfirmedOneTokensInRegion(rolledDice[i][:2], rolledDice[k][:2], c1.terrain)
+
+					// c1.num_tokens = tkncmp.NumTknsInRegion(rolledDice[i][:2], rolledDice[k][:2], c1.terrain)
+					// c1.regions = [2]int{i, k}
+					// c1.No = opponents[j].No
+
+					// var c2 Combinations
+					// c2.terrain = terrainParser_comp(rolledDice[k], rolledDice[i], opponents[j])
+					// c2.potentials = opponents[j].UnfirmedOneTokensInRegion(rolledDice[k][:2], rolledDice[i][:2], c2.terrain)
+
+					// c2.num_tokens = tkncmp.NumTknsInRegion(rolledDice[k][:2], rolledDice[i][:2], c2.terrain)
+					// c2.regions = [2]int{k, i}
+					// c2.No = opponents[j].No
+
+					// combinations_group = append(combinations_group, c1)
+					// combinations_group = append(combinations_group, c2)
 				}
-		
-		}
-
-
-
-		var temp []string
-		for l := 1; l <= len(opponents[j].PotentialObtainedTknsList); l++ {
-	
-			for _, set := range opponents[j].PotentialObtainedTknsList[l] {
-				setString :=  fmt.Sprintf("%s", set)
-				temp = append(temp,setString)
 			}
-		} 
-		opponents_sets[opponents[j].No] = temp
+
+			// var temp []string
+			// for l := 1; l <= len(opponents[j].PotentialObtainedTknsList); l++ {
+			// 	for _, set := range opponents[j].PotentialObtainedTknsList[l] {
+			// 		setString := fmt.Sprintf("%s", set)
+			// 		temp = append(temp, setString)
+			// 	}
+			// }
+			// opponents_sets[opponents[j].No] = temp
 		}
-
-
 
 		sort.SliceStable(combinations_group, func(i, j int) bool {
-			
-				return  len(combinations_group[i].potentials) >  len(combinations_group[j].potentials)
-		
-			
+			return len(combinations_group[i].potentials) > len(combinations_group[j].potentials)
 		})
-		
-	for i :=0; i<len(combinations_group); i++ {
-		_, found := Find(opponents_sets[combinations_group[i].No], fmt.Sprintf("%s", combinations_group[i].potentials))
-		if !found {
-			fmt.Println("check")
-			plr = combinations_group[i].No
-			die1 = combinations_group[i].regions[0]
-			die2 = combinations_group[i].regions[1]
-			terrain =  combinations_group[i].terrain
-			break
-		} 
 
-	}
-	
+		// for i := 0; i < len(combinations_group); i++ {
+		// 	_, found := Find(opponents_sets[combinations_group[i].No], fmt.Sprintf("%s", combinations_group[i].potentials))
+		// 	if !found {
+		// 		fmt.Println("check")
+		// 		plr = combinations_group[i].No
+		// 		die1 = combinations_group[i].regions[0]
+		// 		die2 = combinations_group[i].regions[1]
+		// 		terrain = combinations_group[i].terrain
+		// 		break
+		// 	}
 
-
-if die1==0 || die2==0 {
-	sort.SliceStable(combinations_group, func(i, j int) bool {
-			
-	return  combinations_group[i].num_tokens <  combinations_group[i].num_tokens
-
-
-	
-})
-
-
-plr = combinations_group[0].No
+		// }
+		if len(combinations_group) != 0 {
+			plr = combinations_group[0].No
 			die1 = combinations_group[0].regions[0]
 			die2 = combinations_group[0].regions[1]
-			terrain =  combinations_group[0].terrain
-	fmt.Println("heyyy")
-}
-	fmt.Println(die1)
-	fmt.Println(die2)
-	fmt.Println(plr)
-		
-		 
-	
-	
+			terrain = combinations_group[0].terrain
+		}
+
+		// if die1 == 0 || die2 == 0 {
+		// 	sort.SliceStable(combinations_group, func(i, j int) bool {
+		// 		return combinations_group[i].num_tokens < combinations_group[i].num_tokens
+		// 	})
+
+		// 	plr = combinations_group[0].No
+		// 	die1 = combinations_group[0].regions[0]
+		// 	die2 = combinations_group[0].regions[1]
+		// 	terrain = combinations_group[0].terrain
+		// 	fmt.Println("heyyy")
+		// }
+		// fmt.Println(die1)
+		// fmt.Println(die2)
+		// fmt.Println(plr)
+
 		var temp string = "05:" + rolledDice[die1] + "," + rolledDice[die2] + "," + terrain + ",P" + plr
-		
-		fmt.Println(len(opponents))
+
+		// fmt.Println(len(opponents))
 		fmt.Println("temp-" + temp)
 
 		return temp
 	}
 
+	// Manual
 	spA := human.IsUsingSpA(&p)
 	if spA == "P" {
 		return pistol(human.Pistoling(opponents))
@@ -397,7 +402,7 @@ plr = combinations_group[0].No
 		shovel(rolledDice, i, t)
 	}
 
-	terrain = terrainParser(rolledDice[die1][2:], rolledDice[die2][2:])
+	terrain = human.ChooseTerrain(rolledDice[die1][2:], rolledDice[die2][2:])
 
 	fmt.Println("Choose Player that you want to interrogate by number")
 	for i, opponent := range opponents {
@@ -452,9 +457,9 @@ func pistolReport(args string) string {
 	return ""
 }
 
-func guessTokens(answer ...string) string {
-	fmt.Println("Submitting a guess:", answer[0], answer[1])
-	var temp string = "07:P" + p.No + "," + answer[0] + "," + answer[1]
+func guessTokens(a1 string, a2 string) string {
+	fmt.Println("Submitting a guess:", a1, a2)
+	var temp string = "07:P" + p.No + "," + a1 + "," + a2
 
 	return temp
 }

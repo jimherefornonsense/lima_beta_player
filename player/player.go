@@ -96,21 +96,17 @@ func (plr *Player) RecordPotentialCandidates(nTokens int, candidates []string) {
 	// Checks there's no the same set for same number winners
 	for _, set := range plr.PotentialObtainedTknsList[nTokens] {
 		if len(set) == len(candidates) {
-			var equalityStat = make([]bool, len(set))
-			for i, va := range set {
-				var found bool = false
+			var equalityCounter int = 0
+
+			for _, va := range set {
 				for _, vb := range candidates {
 					if va == vb {
-						found = true
+						equalityCounter++
 					}
 				}
-				equalityStat[i] = found
 			}
-			for _, equality := range equalityStat {
-				// Not a same set for a same number winners in record, storing it
-				if equality == false {
-					break
-				}
+			// Evaluating
+			if equalityCounter == len(candidates) {
 				// A same set for a same number winners in record, not storing it
 				return
 			}
