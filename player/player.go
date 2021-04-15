@@ -26,6 +26,7 @@ type Player struct {
 }
 
 var TableIndexMap = map[string]int{"NN": 0, "NE": 1, "EE": 2, "SE": 3, "SS": 4, "SW": 5, "WW": 6, "NW": 7}
+var Terrains = [4]string{"A", "F", "M", "B"}
 
 func NewPlayer(playerNo string) Player {
 	plr := Player{No: playerNo}
@@ -194,6 +195,12 @@ func (plr *Player) IsGuessingAndGetAnswer() (bool, []string) {
 func (plr *Player) UnfirmedOneTokensInRegion(start string, end string, terrain string) []string {
 	return plr.TokensInRegionByStatus(start, end, terrain, -1)
 }
+
+// Checks tokens in a block of status 2
+func (plr *Player) UnfirmedTwoTokensInRegion(start string, end string, terrain string) []string {
+	return plr.TokensInRegionByStatus(start, end, terrain, 2)
+}
+
 
 // Prints the matrix of current table
 func (plr *Player) DisplayTable() {
