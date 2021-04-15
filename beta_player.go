@@ -236,6 +236,8 @@ func terrainParser_comp(t1 string, t2 string, plr player.Player) []string {
 		terrains = append(terrains, t1)
 	} else if t1 == t2 {
 		terrains = append(terrains, t1)
+	} else {
+		terrains = append(terrains, "A")
 	}
 
 	return terrains
@@ -347,6 +349,7 @@ func chooseDice(args string) string {
 	if g.autopilot {
 		var comp_SPA string = "Q"
 		var rerolled_dices []int
+
 		// opponents_sets := make(map[string][]string)
 
 		// for j := range opponents {
@@ -424,28 +427,29 @@ func chooseDice(args string) string {
 				}
 			}
 		} else {
-			//if len(p.UnfirmedTwoTokensInRegion("NN","NW","A")) > 0 && p.Barrel>0 {
-			if p.UseAbility("B") {
-				var dice_nums int = 2
-				rerolled_dices = append(rerolled_dices, aCombination.regions[0]-1)
-				rerolled_dices = append(rerolled_dices, aCombination.regions[1]-1)
-				if rolledDice[aCombination.unchosen_dice][2:] != "W" {
-					rerolled_dices = append(rerolled_dices, aCombination.unchosen_dice-1)
-					dice_nums++
+			if len(p.UnfirmedTwoTokensInRegion("NN", "NW", "A")) > 0 && p.Barrel > 0 {
+				if p.UseAbility("B") {
+					var dice_nums int = 2
+					rerolled_dices = append(rerolled_dices, aCombination.regions[0]-1)
+					rerolled_dices = append(rerolled_dices, aCombination.regions[1]-1)
+					if rolledDice[aCombination.unchosen_dice][2:] != "W" {
+						rerolled_dices = append(rerolled_dices, aCombination.unchosen_dice-1)
+						dice_nums++
+					}
+					sort.Ints(rerolled_dices)
+					//dice_nums = 5
+					var suffix string = ""
+					for k := 0; k < len(rerolled_dices); k++ {
+						suffix += ","
+						suffix += strconv.Itoa(rerolled_dices[k])
+					}
+					var temp string = "12:" + strconv.Itoa(dice_nums) + suffix
+					//temp = "12:1,1"
+					fmt.Println("Latesz")
+					fmt.Println(temp)
+					return temp
+					fmt.Println("after Barrel2 action2")
 				}
-				sort.Ints(rerolled_dices)
-				//dice_nums = 5
-				var suffix string = ""
-				for k := 0; k < len(rerolled_dices); k++ {
-					suffix += ","
-					suffix += strconv.Itoa(rerolled_dices[k])
-				}
-				var temp string = "12:" + strconv.Itoa(dice_nums) + suffix
-				//temp = "12:1,1"
-				fmt.Println("Latesz")
-				fmt.Println(temp)
-				return temp
-				fmt.Println("after Barrel2 action2")
 			}
 		}
 
@@ -453,6 +457,8 @@ func chooseDice(args string) string {
 		die1 = aCombination.regions[0]
 		die2 = aCombination.regions[1]
 		terrain = aCombination.terrain
+
+		fmt.Println("D", die1, "D2", die2, terrain)
 
 		// if die1 == 0 || die2 == 0 {
 		// 	sort.SliceStable(combinations_group, func(i, j int) bool {
@@ -468,6 +474,7 @@ func chooseDice(args string) string {
 		// fmt.Println(die1)
 		// fmt.Println(die2)
 		// fmt.Println(plr)
+
 		if rolledDice[die1][2:] == rolledDice[die2][2:] {
 			//if len(p.UnfirmedTwoTokensInRegion("NN","NW","A")) > 0 && message[die1][2:] == message[die2][2:] {
 			if p.UseAbility("S") {
