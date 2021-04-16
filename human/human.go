@@ -213,7 +213,7 @@ func Pistoling(opponents []player.Player) (string, string, string, string) {
 		t = strings.ToUpper(t)
 	}
 
-	return start, end, t, opponents[index-1].No
+	return start + "W", end + "W", t, opponents[index-1].No
 }
 
 func Shoveling(d1 string, d2 string) (int, string) {
@@ -232,4 +232,49 @@ func Shoveling(d1 string, d2 string) (int, string) {
 	}
 
 	return i, t
+}
+
+func Barreling(d1 string, d2 string, d3 string) []int {
+	var rerolledDice []int
+	var num int
+	var first int = -1
+	var second int = -2
+
+	fmt.Println("Choose how many dice you want to reroll (dice numbers 1-3)")
+	fmt.Scanf("%d", &num)
+	for num < 1 || num > 3 {
+		fmt.Println("Submit the right answer!")
+		fmt.Scanf("%d", &num)
+	}
+
+	if num == 1 {
+		fmt.Println("Select the die options by number")
+		fmt.Println("1.", d1)
+		fmt.Println("2.", d2)
+		fmt.Println("3.", d3)
+		fmt.Scanf("%d", &first)
+		for first < 1 || first > 3 {
+			fmt.Println("Submit the right answer!")
+			fmt.Scanf("%d", &first)
+		}
+		rerolledDice = append(rerolledDice, first-1)
+	} else if num == 2 {
+		fmt.Println("Select the die options by number (separate by space)")
+		fmt.Println("1.", d1)
+		fmt.Println("2.", d2)
+		fmt.Println("3.", d3)
+		fmt.Scanf("%d%d", &first, &second)
+		for (first < 1 || first > 3) || (second < 1 || second > 3) || first == second {
+			fmt.Println("Submit the right answer!")
+			fmt.Scanf("%d%d", &first, &second)
+		}
+		rerolledDice = append(rerolledDice, first-1)
+		rerolledDice = append(rerolledDice, second-1)
+	} else {
+		rerolledDice = append(rerolledDice, 0)
+		rerolledDice = append(rerolledDice, 1)
+		rerolledDice = append(rerolledDice, 2)
+	}
+
+	return rerolledDice
 }

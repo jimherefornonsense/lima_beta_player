@@ -6,9 +6,6 @@ import (
 	"lima_beta_player/player"
 )
 
-var TokenMap = [24]string{"1B", "1F", "1M", "2B", "2F", "2M", "3B", "3F", "3M", "4B", "4F", "4M", "5B", "5F", "5M", "6B", "6F", "6M", "7B", "7F", "7M", "8B", "8F", "8M"}
-var directionIndexMap = map[string]int{"NN": 0, "NE": 3, "EE": 6, "SE": 9, "SS": 12, "SW": 15, "WW": 18, "NW": 21}
-
 func AllocatedTokensCompute(tokens []string, plr *player.Player, opponents []player.Player) {
 	for _, token := range tokens {
 		plr.MakeRecord(token, 1)
@@ -46,23 +43,6 @@ func TokenInfoSwapCompute(token string, opponentNo string, plr *player.Player, o
 			opponents[i].RecordPotentialCandidates(maxObtainedTkns, potentialCandidates)
 		}
 	}
-}
-
-// Number of tokens in a block
-func NumTknsInRegion(start string, end string, terrain string) int {
-	var idxFrom, idxEnd, nToken int
-
-	idxFrom = directionIndexMap[start]
-	idxEnd = directionIndexMap[end]
-	if idxEnd <= idxFrom {
-		idxEnd += 24
-	}
-	nToken = idxEnd - idxFrom
-
-	if terrain != "A" {
-		return nToken / 3
-	}
-	return nToken
 }
 
 func isSubsetAndGetXOR(a []string, b []string) (bool, []string) {

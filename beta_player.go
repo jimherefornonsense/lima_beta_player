@@ -5,10 +5,10 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"lima_beta_player/computer/selectorcmp"
 	"lima_beta_player/computer/tkncmp"
 	"lima_beta_player/human"
 	"lima_beta_player/player"
-	"math/rand"
 	"os"
 	"sort"
 	"strconv"
@@ -21,25 +21,6 @@ type Game struct {
 	autopilot    bool
 	leftTokens   []string
 }
-
-type Combination struct {
-	No            string
-	regions       [2]int
-	terrain       string
-	potentials    []string
-	unchosen_dice int
-}
-
-type map_entry struct {
-	val int
-	key string
-}
-
-type map_entries []map_entry
-
-func (s map_entries) Len() int           { return len(s) }
-func (s map_entries) Less(i, j int) bool { return s[i].val < s[j].val }
-func (s map_entries) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 var g Game
 var p player.Player
@@ -71,7 +52,6 @@ var functions = map[string]fn{
 
 func errorMsg(arg string) string {
 	fmt.Println(arg)
-
 	return ""
 }
 
@@ -79,7 +59,6 @@ func (gm *Game) playerNO(args string) string {
 	gm.totalPlayers, _ = strconv.Atoi(args[len(args)-1:])
 	fmt.Printf("There are %d players, and you are player %s.\n", gm.totalPlayers, p.No)
 	initOpponents(gm.totalPlayers)
-
 	return ""
 }
 
@@ -103,7 +82,6 @@ func readMyTerrain(args string) string {
 	}
 
 	fmt.Println("Terrains are: " + strings.Join(playerTokens, ", "))
-
 	return ""
 }
 
@@ -117,7 +95,6 @@ func (gm *Game) leftoverTokens(args string) string {
 		fmt.Printf(x + " ")
 	}
 	fmt.Printf("\n")
-
 	return ""
 }
 
@@ -131,7 +108,6 @@ func tokenInfoSwap(args string) string {
 
 		fmt.Printf("You acknowledge %s got a token %s\n", message[0], message[2])
 	}
-
 	return ""
 }
 
@@ -141,7 +117,6 @@ func remainingWinner(args string) string {
 	fmt.Printf("%s wins as the only remaining player. All others have guessed incorrectly and been disqualified. The treasures are located at %s and %s\n",
 		message[0], message[1], message[2])
 	os.Exit(0)
-
 	return ""
 }
 
@@ -182,160 +157,31 @@ func playerTurn(args string) string {
 func pistol(d1 string, d2 string, t string, pNo string) string {
 	var msg string
 
-	msg = "05:" + d1 + "W," + d2 + "W," + t + "," + "P" + pNo + "," + "P"
+	fmt.Println("Using pistol!!!!!!!!!!!!!")
+	msg = "05:" + d1 + "," + d2 + "," + t + "," + "P" + pNo + "," + "P"
 
 	return msg
 }
 
 func shovel(selectedDice []string, index int, swappedTerrain string) {
+	fmt.Println("Using shovel!!!!!!!!!!!!!")
 	selectedDice[index] = strings.Replace(selectedDice[index], selectedDice[index][2:], swappedTerrain, 1)
-	fmt.Println(selectedDice[index])
 }
 
-func terrainParser_comp(t1 string, t2 string, plr player.Player) []string {
-	// var t string = "A"
+func barrel(rerolledDice []int) string {
+	var msg string
 
-	// var m = make(map[string]int)
-	// m["A"] = len(plr.UnfirmedOneTokensInRegion(t1[:2], t2[:2], "A"))
-	// m["B"] = len(plr.UnfirmedOneTokensInRegion(t1[:2], t2[:2], "B"))
-	// m["F"] = len(plr.UnfirmedOneTokensInRegion(t1[:2], t2[:2], "F"))
-	// m["M"] = len(plr.UnfirmedOneTokensInRegion(t1[:2], t2[:2], "M"))
-
-	// var es map_entries
-	// for k, v := range m {
-	// 	es = append(es, map_entry{val: v, key: k})
-	// }
-
-	// sort.Sort(sort.Reverse(es))
-
-	// if t1[2:] == "W" && t2[2:] == "W" {
-	// 	t = es[0].key
-	// 	//t = "A"
-	// 	return t
-	// } else if t1[2:] == "W" && t2[2:] != "W" {
-	// 	t = "A"
-	// } else if t1[2:] != "W" && t2[2:] == "W" {
-	// 	fmt.Println("third:")
-	// 	t = "A"
-	// } else if t1[2:] == t2[2:] {
-	// 	fmt.Println("fourth:")
-	// 	return t1[2:]
-	// }
-	var terrains = []string{}
-
-	if t1 == "W" && t2 == "W" {
-		terrains = append(terrains, "A")
-		terrains = append(terrains, "B")
-		terrains = append(terrains, "F")
-		terrains = append(terrains, "M")
-	} else if t1 == "W" && t2 != "W" {
-		terrains = append(terrains, "A")
-		terrains = append(terrains, t2)
-	} else if t1 != "W" && t2 == "W" {
-		terrains = append(terrains, "A")
-		terrains = append(terrains, t1)
-	} else if t1 == t2 {
-		terrains = append(terrains, t1)
-	} else {
-		terrains = append(terrains, "A")
+	fmt.Println("Using barrel!!!!!!!!!!!!!")
+	sort.Ints(rerolledDice)
+	var suffix string = ""
+	for k := 0; k < len(rerolledDice); k++ {
+		suffix += ","
+		suffix += strconv.Itoa(rerolledDice[k])
 	}
 
-	return terrains
-}
+	msg = "12:" + strconv.Itoa(len(rerolledDice)) + suffix
 
-// Checks there's no the same set in history sets
-func isNewPotentialSet(candidates []string, plr player.Player) bool {
-	for _, sets := range plr.PotentialObtainedTknsList {
-		for _, set := range sets {
-			if len(set) == len(candidates) {
-				var equalityCounter int = 0
-				setString := fmt.Sprintf("%s", set)
-
-				for _, token := range candidates {
-					if strings.Contains(setString, token) {
-						equalityCounter++
-					}
-				}
-
-				// Evaluating
-				if equalityCounter == len(candidates) {
-					// A same set in record
-					return false
-				}
-			}
-		}
-	}
-
-	return true
-}
-
-// Returns true if found a Combination intelligently, false if not
-func selection_cmp(rolledDice []string) (bool, Combination) {
-	var combinations_group []Combination
-	var temp Combination
-
-	for j := range opponents {
-		for i := 1; i <= 3; i++ {
-			for k := i + 1; k <= 3; k++ {
-				terrains := terrainParser_comp(rolledDice[i][2:], rolledDice[k][2:], opponents[j])
-				for _, t := range terrains {
-					var c1 Combination
-					c1.No = opponents[j].No
-					c1.regions = [2]int{i, k}
-					c1.terrain = t
-					c1.potentials = opponents[j].UnfirmedOneTokensInRegion(rolledDice[i][:2], rolledDice[k][:2], t)
-					for l := 1; l <= 3; l++ {
-						if l != i && l != k {
-							c1.unchosen_dice = l
-						}
-					}
-
-					var c2 Combination
-					c2.No = opponents[j].No
-					c2.regions = [2]int{k, i}
-					c2.terrain = t
-					c2.potentials = opponents[j].UnfirmedOneTokensInRegion(rolledDice[k][:2], rolledDice[i][:2], t)
-					for l := 1; l <= 3; l++ {
-						if l != i && l != k {
-							c2.unchosen_dice = l
-						}
-					}
-
-					if len(c1.potentials) != 0 && isNewPotentialSet(c1.potentials, opponents[j]) {
-						combinations_group = append(combinations_group, c1)
-					}
-					if len(c2.potentials) != 0 && isNewPotentialSet(c2.potentials, opponents[j]) {
-						combinations_group = append(combinations_group, c2)
-					}
-
-					// Just in case there is no new potential set
-					if len(c1.potentials) != 0 {
-						temp.No = c1.No
-						temp.regions[0] = c1.regions[0]
-						temp.regions[1] = c1.regions[1]
-						temp.terrain = c1.terrain
-						temp.unchosen_dice = c1.unchosen_dice
-					} else {
-						temp.No = c2.No
-						temp.regions[0] = c2.regions[0]
-						temp.regions[1] = c2.regions[1]
-						temp.terrain = c2.terrain
-						temp.unchosen_dice = c2.unchosen_dice
-					}
-				}
-			}
-		}
-	}
-
-	sort.SliceStable(combinations_group, func(i, j int) bool {
-		return len(combinations_group[i].potentials) > len(combinations_group[j].potentials)
-	})
-
-	if len(combinations_group) != 0 {
-		return true, combinations_group[0]
-	}
-
-	return false, temp
+	return msg
 }
 
 func chooseDice(args string) string {
@@ -345,160 +191,44 @@ func chooseDice(args string) string {
 	var die2 int = 0
 	var terrain, plr string
 
-	// Temporary using random choosing, still implementing intelligent one
 	if g.autopilot {
 		var comp_SPA string = "Q"
-		var rerolled_dices []int
+		var aCombination selectorcmp.Combination
+		var isIntelligent bool
 
-		// opponents_sets := make(map[string][]string)
-
-		// for j := range opponents {
-		// 	for i := 1; i <= 3; i++ {
-		// 		for k := i + 1; k <= 3; k++ {
-		// var c1 Combinations
-
-		// c1.terrain = terrainParser_comp(rolledDice[i], rolledDice[k], opponents[j])
-		// c1.potentials = opponents[j].UnfirmedOneTokensInRegion(rolledDice[i][:2], rolledDice[k][:2], c1.terrain)
-
-		// c1.num_tokens = tkncmp.NumTknsInRegion(rolledDice[i][:2], rolledDice[k][:2], c1.terrain)
-		// c1.regions = [2]int{i, k}
-		// c1.No = opponents[j].No
-
-		// var c2 Combinations
-		// c2.terrain = terrainParser_comp(rolledDice[k], rolledDice[i], opponents[j])
-		// c2.potentials = opponents[j].UnfirmedOneTokensInRegion(rolledDice[k][:2], rolledDice[i][:2], c2.terrain)
-
-		// c2.num_tokens = tkncmp.NumTknsInRegion(rolledDice[k][:2], rolledDice[i][:2], c2.terrain)
-		// c2.regions = [2]int{k, i}
-		// c2.No = opponents[j].No
-
-		// combinations_group = append(combinations_group, c1)
-		// combinations_group = append(combinations_group, c2)
-		// 	}
-		// }
-
-		// var temp []string
-		// for l := 1; l <= len(opponents[j].PotentialObtainedTknsList); l++ {
-		// 	for _, set := range opponents[j].PotentialObtainedTknsList[l] {
-		// 		setString := fmt.Sprintf("%s", set)
-		// 		temp = append(temp, setString)
-		// 	}
-		// }
-		// opponents_sets[opponents[j].No] = temp
-		// }
-
-		// sort.SliceStable(combinations_group, func(i, j int) bool {
-		// 	return len(combinations_group[i].potentials) > len(combinations_group[j].potentials)
-		// })
-
-		// for i := 0; i < len(combinations_group); i++ {
-		// 	_, found := Find(opponents_sets[combinations_group[i].No], fmt.Sprintf("%s", combinations_group[i].potentials))
-		// 	if !found {
-		// 		fmt.Println("check")
-		// 		plr = combinations_group[i].No
-		// 		die1 = combinations_group[i].regions[0]
-		// 		die2 = combinations_group[i].regions[1]
-		// 		terrain = combinations_group[i].terrain
-		// 		break
-		// 	}
-
-		// }
-		isIntelligent, aCombination := selection_cmp(rolledDice)
-
+		isIntelligent, aCombination = selectorcmp.Selection(rolledDice, opponents)
 		if isIntelligent {
-			var theOtherPlr = 0
-			for i := range opponents {
-				if opponents[i].Pistol < 1 {
-					if i == 0 {
-						theOtherPlr = 1
-					} else {
-						theOtherPlr++
-						if theOtherPlr == len(opponents) {
-							theOtherPlr = 0
-						}
-					}
-
-					if p.UseAbility("P") {
-						var makeUpMsg = []string{"P0", "NNW", "EEW", "SWW"}
-						_, aCombination = selection_cmp(makeUpMsg)
-						d1, d2 := rolledDice[aCombination.regions[0]], rolledDice[aCombination.regions[1]]
-						return pistol(d1, d2, aCombination.terrain, opponents[theOtherPlr].No)
-					}
+			doIt, targetNo := selectorcmp.IsUsePistol(p, opponents)
+			if doIt {
+				if p.UseAbility("P") {
+					return pistol(selectorcmp.Pistoling(rolledDice, targetNo, opponents))
 				}
 			}
 		} else {
-			if len(p.UnfirmedTwoTokensInRegion("NN", "NW", "A")) > 0 && p.Barrel > 0 {
-				if p.UseAbility("B") {
-					var dice_nums int = 2
-					rerolled_dices = append(rerolled_dices, aCombination.regions[0]-1)
-					rerolled_dices = append(rerolled_dices, aCombination.regions[1]-1)
-					if rolledDice[aCombination.unchosen_dice][2:] != "W" {
-						rerolled_dices = append(rerolled_dices, aCombination.unchosen_dice-1)
-						dice_nums++
-					}
-					sort.Ints(rerolled_dices)
-					//dice_nums = 5
-					var suffix string = ""
-					for k := 0; k < len(rerolled_dices); k++ {
-						suffix += ","
-						suffix += strconv.Itoa(rerolled_dices[k])
-					}
-					var temp string = "12:" + strconv.Itoa(dice_nums) + suffix
-					//temp = "12:1,1"
-					fmt.Println("Latesz")
-					fmt.Println(temp)
-					return temp
-					fmt.Println("after Barrel2 action2")
-				}
+			if p.UseAbility("B") {
+				return barrel(selectorcmp.Barreling(rolledDice, aCombination))
 			}
 		}
 
 		plr = aCombination.No
-		die1 = aCombination.regions[0]
-		die2 = aCombination.regions[1]
-		terrain = aCombination.terrain
+		die1 = aCombination.Region[0]
+		die2 = aCombination.Region[1]
+		terrain = aCombination.Terrain
 
-		fmt.Println("D", die1, "D2", die2, terrain)
-
-		// if die1 == 0 || die2 == 0 {
-		// 	sort.SliceStable(combinations_group, func(i, j int) bool {
-		// 		return combinations_group[i].num_tokens < combinations_group[i].num_tokens
-		// 	})
-
-		// 	plr = combinations_group[0].No
-		// 	die1 = combinations_group[0].regions[0]
-		// 	die2 = combinations_group[0].regions[1]
-		// 	terrain = combinations_group[0].terrain
-		// 	fmt.Println("heyyy")
-		// }
-		// fmt.Println(die1)
-		// fmt.Println(die2)
-		// fmt.Println(plr)
-
-		if rolledDice[die1][2:] == rolledDice[die2][2:] {
-			//if len(p.UnfirmedTwoTokensInRegion("NN","NW","A")) > 0 && message[die1][2:] == message[die2][2:] {
+		if rolledDice[die1][2:] == rolledDice[die2][2:] && rolledDice[die1][2:] != "W" {
 			if p.UseAbility("S") {
-				var terrainSet = [3]string{"B", "F", "M"}
-				for _, t := range terrainSet {
-					if rolledDice[die1][2:] != t {
-						shovel(rolledDice, die1, t)
-						break
-					}
-				}
-				fmt.Println("used shovel")
-				_, aCombination = selection_cmp(rolledDice)
+				shovel(rolledDice, die1, selectorcmp.Shoveling(rolledDice[die1]))
+				fmt.Println("used shovel", rolledDice)
+				_, aCombination = selectorcmp.Selection(rolledDice, opponents)
 				comp_SPA = "S"
 				plr = aCombination.No
-				die1 = aCombination.regions[0]
-				die2 = aCombination.regions[1]
-				terrain = aCombination.terrain
+				die1 = aCombination.Region[0]
+				die2 = aCombination.Region[1]
+				terrain = aCombination.Terrain
 			}
 		}
 
 		var temp string = "05:" + rolledDice[die1] + "," + rolledDice[die2] + "," + terrain + ",P" + plr + "," + comp_SPA
-
-		// fmt.Println(len(opponents))
-		fmt.Println("temp-" + temp)
 		return temp
 	}
 
@@ -507,6 +237,8 @@ func chooseDice(args string) string {
 
 	if spA == "P" {
 		return pistol(human.Pistoling(opponents))
+	} else if spA == "B" {
+		return barrel(human.Barreling(rolledDice[1], rolledDice[2], rolledDice[3]))
 	}
 
 	fmt.Println("Choose two dice from options")
@@ -534,7 +266,6 @@ func chooseDice(args string) string {
 	plr = opponents[n-1].No
 
 	var temp string = "05:" + rolledDice[die1] + "," + rolledDice[die2] + "," + terrain + ",P" + plr + "," + spA
-	//var temp string = "05:" + "NNB" + "," + "NNB" + "," + "B" + ",P" + plr + "," + spA
 	return temp
 }
 
@@ -634,7 +365,6 @@ func readFromPipe(fd *os.File, rd *bufio.Reader) string {
 	if len(buff) > 0 {
 		return buff
 	}
-
 	return ""
 }
 
@@ -643,20 +373,6 @@ func writeToPipe(fd1 *os.File, args string) {
 	fmt.Println("written msg")
 	fmt.Println(args)
 	fd1.Write([]byte(args))
-}
-
-func randInt(min int, max int) int {
-	// return min + rand.Intn(max-min)
-	return rand.Intn(max-min+1) + min
-}
-
-func Find(slice []string, val string) (int, bool) {
-	for i, item := range slice {
-		if item == val {
-			return i, true
-		}
-	}
-	return -1, false
 }
 
 func main() {
