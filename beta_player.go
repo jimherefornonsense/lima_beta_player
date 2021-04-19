@@ -218,7 +218,6 @@ func chooseDice(args string) string {
 		if rolledDice[die1][2:] == rolledDice[die2][2:] && rolledDice[die1][2:] != "W" {
 			if p.UseAbility("S") {
 				shovel(rolledDice, die1, selectorcmp.Shoveling(rolledDice[die1]))
-				fmt.Println("used shovel", rolledDice)
 				_, aCombination = selectorcmp.Selection(rolledDice, opponents)
 				comp_SPA = "S"
 				plr = aCombination.No
@@ -312,7 +311,6 @@ func barrelReport(args string) string {
 		}
 	}
 	fmt.Println("Player " + message[0][1:] + " has rerolled " + message[1] + "," + message[2] + "," + message[3])
-	//	chooseDice(args)
 
 	return chooseDice(args)
 }
